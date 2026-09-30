@@ -123,10 +123,9 @@ def main(args) -> None:
         hf_id = reg[m]["hf_id"]
         print(f"[score] candidate {m} ({hf_id})")
         encoder = None if is_openai(m) else load_encoder(m, args.device)
-        if encoder is not None:  # cap seq length to match the frozen score caches
+        if encoder is not None:  # match build_score_cache.py: set 512 unconditionally
             try:
-                cur = int(getattr(encoder, "max_seq_length", args.max_seq_length) or args.max_seq_length)
-                encoder.max_seq_length = min(cur, args.max_seq_length)
+                encoder.max_seq_length = args.max_seq_length
             except Exception:
                 pass
         q_emb_cache: Dict[int, np.ndarray] = {}
