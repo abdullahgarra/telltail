@@ -59,9 +59,10 @@ absolute paths.
 **Tier 0 — figures from the published CSVs (no GPU, seconds).**
 Plot straight from the 8 CSVs in `results/paper/`; nothing to recompute.
 ```bash
-python plots/asr_vs_budget.py --tm 1          # ASR vs query budget (Fig. 3/5)
+python plots/asr_vs_budget.py --tm 1    # ASR vs budget, per strategy (Fig. 3/5)
 python plots/asr_vs_budget.py --tm 2
-python plots/plot_ccr_0_oscr.py --tm 2 --probe topic   # OSCR + CCR@FA / AUOSCR
+python plots/plot_ccr_0_oscr.py --tm 1  # CCR@fa<=0 / CCR@fa<=2 / AUOSCR vs k
+python plots/plot_ccr_0_oscr.py --tm 2
 ```
 
 **Tier 1 — numbers from released score caches (CPU, minutes).**
@@ -91,7 +92,7 @@ Exact paper configs: budgets `1,5,10,12,15,18,20`, seed `1337`, corpus
 - `telltail/` — core library (model registry, env paths, embedding).
 - `configs/models.yaml` — the 53-model registry (19 candidates); byte-exact prefixes.
 - `data/queries/` — `msmarco_topic.csv`, `msmarco_random.csv`.
-- `plots/` — `asr_vs_budget.py` (`--tm {1,2}`), `plot_ccr_0_oscr.py` (OSCR + AUOSCR), `oscr_curve.py`.
+- `plots/` — `asr_vs_budget.py` (ASR vs budget), `plot_ccr_0_oscr.py` (CCR@fa / AUOSCR vs k); both `--tm {1,2}`, paper styling.
 - `scripts/reproduce_generic.sh` — end-to-end reproduction.
 - `results/paper/` — the 8 published CSVs.
 - `tools/` — `build_models_yaml.py`.
