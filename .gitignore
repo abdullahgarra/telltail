@@ -13,8 +13,9 @@ logs/
 *.out
 *.err
 
-# local regression harness (hardcodes frozen-cache paths)
+# local machine-specific helpers (hardcode absolute source paths)
 tools/run_regression.py
+tools/build_index_symlinks.py
 
 # large / regenerable data
 *.index
