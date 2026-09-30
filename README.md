@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="telltail_icon.png" alt="TellTail" width="200"/>
+  <img src="assets/telltail_icon.png" alt="TellTail" width="200"/>
 </p>
 
 <h1 align="center"><samp><b>&nbsp;T&nbsp;e&nbsp;l&nbsp;l&nbsp;T&nbsp;a&nbsp;i&nbsp;l&nbsp;</b></samp></h1>
