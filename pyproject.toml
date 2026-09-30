@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telltail"
+version = "0.1.0"
+description = "TellTail: fingerprinting retrievers in black-box systems"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+    "faiss-cpu",
+    "sentence-transformers",
+    "torch",
+    "openai",
+    "datasets",
+    "python-dotenv",
+    "matplotlib",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+include = ["telltail*"]
