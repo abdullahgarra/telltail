@@ -1,8 +1,28 @@
+# secrets / env
 .env
+
+# local-only docs (kept outside the repo, but ignore defensively if created here)
+REGRESSION.md
+telltail_audit.md
+
+# generated outputs / run artifacts
 outputs/
 results/paper_repro/
+logs/
+*.log
+*.out
+*.err
+
+# local regression harness (hardcodes frozen-cache paths)
+tools/run_regression.py
+
+# large / regenerable data
 *.index
 *.npy
+
+# index symlink dir (machine-specific; points at large indices)
+indexes/
+
+# python
 __pycache__/
 .ipynb_checkpoints/
-tools/run_regression.py
