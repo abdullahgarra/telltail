@@ -1,8 +1,13 @@
-# TellTail
+<p align="center">
+  <img src="telltail_icon.png" alt="TellTail" width="200"/>
+</p>
 
-Fingerprinting retrievers in black-box systems — reference implementation of the
-generic-query attacks **TellTail-Random** and **TellTail-Topic** across two
-threat models (TM1 ordered, TM2 unordered top-k).
+<h1 align="center"><samp><b>&nbsp;T&nbsp;e&nbsp;l&nbsp;l&nbsp;T&nbsp;a&nbsp;i&nbsp;l&nbsp;</b></samp></h1>
+
+<p align="center"><b>Fingerprinting retrievers in black-box systems</b></p>
+
+Reference implementation of the generic-query attacks **TellTail-Random** and
+**TellTail-Topic** across two threat models (TM1 ordered, TM2 unordered top-k).
 
 ## Setup
 

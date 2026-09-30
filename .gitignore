@@ -24,6 +24,9 @@ tools/build_index_symlinks.py
 # index symlink dir (machine-specific; points at large indices)
 indexes/
 
+# branding asset (kept local)
+telltail_icon.png
+
 # python
 __pycache__/
 .ipynb_checkpoints/
