@@ -38,20 +38,39 @@ where `<query_set>` is the stem of the `--queries` CSV.
 `--interface tm1|tm2` selects the threat model. Terminology: *target* = the
 deployed victim retriever; *candidate* = a retriever in the attacker's set.
 
-### Reproduce the paper CSVs
+### Reproducing generic-query results
 
+Three tiers, cheapest first. All paths come from the `.env` variables above — no
+absolute paths.
+
+**Tier 0 — figures from the published CSVs (no GPU, seconds).**
+Plot straight from the 8 CSVs in `results/paper/`; nothing to recompute.
 ```bash
-bash scripts/reproduce_generic.sh      # both query sets, TM1 + TM2, evaluate + sweep
-python plots/asr_vs_budget.py --tm 1   # Fig. 3/5-style ASR vs budget
-python plots/oscr_curve.py --tm 2 --probe topic
+python plots/asr_vs_budget.py --tm 1          # ASR vs query budget (Fig. 3/5)
+python plots/asr_vs_budget.py --tm 2
+python plots/plot_ccr_0_oscr.py --tm 2 --probe topic   # OSCR + CCR@FA / AUOSCR
 ```
+
+**Tier 1 — numbers from released score caches (CPU, minutes).**
+Point `evaluate`/`sweep` at a released score cache (`--score-cache <dir>`) to
+regenerate the qb_k and OSCR CSVs without any GPU or corpus:
+```bash
+python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv \
+    --score-cache <cache> --top-ks 1,2,3,5,10,20,50 --n-repeats 100 --n-jobs 8
+python -m generic_queries sweep    --interface tm2 --queries data/queries/msmarco_topic.csv \
+    --score-cache <cache> --top-ks 1,2,3,4,5,10,20,50
+```
+
+**Tier 2 — full pipeline from scratch (needs FAISS indices + GPU).**
+Rebuild retrieval signatures, passage cache, and score caches, then evaluate:
+```bash
+bash scripts/reproduce_generic.sh    # retrieve -> fetch -> score -> evaluate -> sweep
+```
+Requires `TELLTAIL_INDEX_DIR` populated with one FAISS index per model and a GPU.
 
 Exact paper configs: budgets `1,5,10,12,15,18,20`, seed `1337`, corpus
 `same_as_top_k`, enumerate-when-≤-repeats on; TM1 `top_ks 1,2,3,5,10,20,50`,
 `n_repeats 100`; TM2 `top_ks 1,2,3,4,5,10,20,50`, `n_repeats 500`.
-
-The 8 published CSVs are in `results/paper/`. `REGRESSION.md` documents how the
-clean code reproduces them from the frozen score caches.
 
 ## Layout
 
@@ -59,10 +78,10 @@ clean code reproduces them from the frozen score caches.
 - `telltail/` — core library (model registry, env paths, embedding).
 - `configs/models.yaml` — the 53-model registry (19 candidates); byte-exact prefixes.
 - `data/queries/` — `msmarco_topic.csv`, `msmarco_random.csv`.
-- `plots/` — `asr_vs_budget.py` (`--tm {1,2}`), `oscr_curve.py`.
+- `plots/` — `asr_vs_budget.py` (`--tm {1,2}`), `plot_ccr_0_oscr.py` (OSCR + AUOSCR), `oscr_curve.py`.
 - `scripts/reproduce_generic.sh` — end-to-end reproduction.
-- `results/paper/` — the 8 golden CSVs.
-- `tools/` — `build_models_yaml.py`, `run_regression.py`.
+- `results/paper/` — the 8 published CSVs.
+- `tools/` — `build_models_yaml.py`.
 
 ## Notes
 

@@ -27,3 +27,5 @@ indexes/
 # python
 __pycache__/
 .ipynb_checkpoints/
+tools/smoke_test.py
+tools/smoke_test.slurm
