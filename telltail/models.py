@@ -84,12 +84,14 @@ def apply_prefix(alias: str, texts: List[str], kind: str) -> List[str]:
 
     OpenAI models use no external prefix (the API handles instruction).
     """
-    if kind not in ("query", "passage"):
-        raise ValueError("kind must be 'query' or 'passage'")
+    prefix_key = {"query": "query_prefix", "passage": "passage_prefix",
+                  "index_passage": "index_passage_prefix"}.get(kind)
+    if prefix_key is None:
+        raise ValueError("kind must be 'query', 'passage', or 'index_passage'")
     entry = _entry(alias)
     if entry.get("backend") == "openai":
         return list(texts)
-    pref = entry["query_prefix"] if kind == "query" else entry["passage_prefix"]
+    pref = entry.get(prefix_key, "")
     return [f"{pref}{t}" for t in texts] if pref else list(texts)
 
 

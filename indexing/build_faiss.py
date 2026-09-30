@@ -61,9 +61,10 @@ def build_one(alias: str, hf_id: str, out_dir: Path, corpus_texts: List[str],
             pass
 
     def embed_norm(texts: List[str]) -> np.ndarray:
-        # Registry applies the passage prefix; normalize here via faiss (matches
-        # the original builder: encode un-normalized, then L2-normalize).
-        vecs = embed(alias, texts, kind="passage", normalize=False,
+        # Use index_passage_prefix (what the FROZEN indices were built with, which
+        # differs from the scoring-stage passage_prefix for a few models), then
+        # L2-normalize (matches the original builder: encode un-normalized -> L2).
+        vecs = embed(alias, texts, kind="index_passage", normalize=False,
                      batch_size=batch_size, device=device, encoder=encoder)
         vecs = np.ascontiguousarray(vecs.astype(np.float32, copy=False))
         faiss.normalize_L2(vecs)
@@ -117,6 +118,8 @@ def main() -> None:
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
+    from telltail.models import is_openai
+
     reg = load_registry()
     if args.all:
         aliases = list(reg.keys())
@@ -125,6 +128,18 @@ def main() -> None:
     else:
         raise SystemExit("pass --models <aliases> or --all")
     out_dir = (args.out or index_dir()).expanduser().resolve()
+
+    # OpenAI models are NOT built here: 8.8M passages must go through the OpenAI
+    # Batch API (a separate multi-stage pipeline), not synchronous embedding.
+    openai_aliases = [a for a in aliases if a in reg and is_openai(a)]
+    if openai_aliases:
+        print(f"[openai] skipping {openai_aliases}: build via the Batch-API pipeline "
+              "(indexing/openai/: make_batches -> run_batches -> build_from_shards), "
+              "not this synchronous builder. See indexing/README.md.")
+    aliases = [a for a in aliases if not (a in reg and is_openai(a))]
+    if not aliases:
+        print("[done] nothing to build with the synchronous builder.")
+        return
 
     from datasets import load_dataset
     print("[corpus] loading BeIR/msmarco (full corpus)...")

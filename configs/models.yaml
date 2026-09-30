@@ -7,317 +7,370 @@ models:
     hf_id: "Qwen/Qwen3-Embedding-0.6B"
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "qwen-4b"
     hf_id: "Qwen/Qwen3-Embedding-4B"
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "e5-small"
     hf_id: "intfloat/e5-small-v2"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: "passage: "
     candidate: true
     backend: sentence_transformers
   - alias: "e5-base"
     hf_id: "intfloat/e5-base-v2"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "e5-large"
     hf_id: "intfloat/e5-large-v2"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: "passage: "
     candidate: true
     backend: sentence_transformers
   - alias: "multilingual-e5-small"
     hf_id: "intfloat/multilingual-e5-small"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: "passage: "
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-base"
     hf_id: "intfloat/multilingual-e5-base"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: "passage: "
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-large"
     hf_id: "intfloat/multilingual-e5-large"
     query_prefix: "query: "
     passage_prefix: "passage: "
+    index_passage_prefix: "passage: "
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-large-instruct"
     hf_id: "intfloat/multilingual-e5-large-instruct"
     query_prefix: "Retrieve semantically similar text."
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "gte-modernbert"
     hf_id: "Alibaba-NLP/gte-modernbert-base"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "gte-large-v1.5"
     hf_id: "Alibaba-NLP/gte-large-en-v1.5"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "gte-base-v1.5"
     hf_id: "Alibaba-NLP/gte-base-en-v1.5"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "gte-multi"
     hf_id: "Alibaba-NLP/gte-multilingual-base"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "gte-base"
     hf_id: "thenlper/gte-base"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "nomic-modernbert"
     hf_id: "nomic-ai/modernbert-embed-base"
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
+    index_passage_prefix: "search_document: "
     candidate: true
     backend: sentence_transformers
   - alias: "nomic-v1.5"
     hf_id: "nomic-ai/nomic-embed-text-v1.5"
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "nomic-v1"
     hf_id: "nomic-ai/nomic-embed-text-v1"
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "gtr-t5-base"
     hf_id: "sentence-transformers/gtr-t5-base"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "gtr-t5-large"
     hf_id: "sentence-transformers/gtr-t5-large"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "minilm-l6"
     hf_id: "sentence-transformers/all-MiniLM-L6-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "minilm-l12"
     hf_id: "sentence-transformers/all-MiniLM-L12-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "mpnet"
     hf_id: "sentence-transformers/all-mpnet-base-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "paraphrase-minilm-l6"
     hf_id: "sentence-transformers/paraphrase-MiniLM-L6-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "paraphrase-multi-minilm-l12"
     hf_id: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "paraphrase-multi-mpnet"
     hf_id: "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "sentence-t5-base"
     hf_id: "sentence-transformers/sentence-t5-base"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "sentence-t5-large"
     hf_id: "sentence-transformers/sentence-t5-large"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "bge-small"
     hf_id: "BAAI/bge-small-en-v1.5"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "bge-base"
     hf_id: "BAAI/bge-base-en-v1.5"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "bge-large"
     hf_id: "BAAI/bge-large-en-v1.5"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "bge-m3"
     hf_id: "BAAI/bge-m3"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v3"
     hf_id: "jinaai/jina-embeddings-v3"
     query_prefix: "Represent the query for retrieving evidence documents:"
     passage_prefix: "Represent the document for retrieval: "
+    index_passage_prefix: "Represent the document for retrieval: "
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v5-small"
     hf_id: "jinaai/jina-embeddings-v5-text-small-retrieval"
     query_prefix: "Query:"
     passage_prefix: "Document:"
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v2-base"
     hf_id: "jinaai/jina-embeddings-v2-base-en"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v2-small"
     hf_id: "jinaai/jina-embeddings-v2-small-en"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v1-base"
     hf_id: "jinaai/jina-embedding-b-en-v1"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "snowflake-v2"
     hf_id: "Snowflake/snowflake-arctic-embed-m-v2.0"
     query_prefix: "query:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: sentence_transformers
   - alias: "snowflake-v1"
     hf_id: "Snowflake/snowflake-arctic-embed-m"
     query_prefix: "query:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-v1"
     hf_id: "HIT-TMG/KaLM-embedding-multilingual-mini-v1"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-instruct-v1"
     hf_id: "HIT-TMG/KaLM-embedding-multilingual-mini-instruct-v1"
     query_prefix: "Instruct: Given a query, retrieve documents that answer the query.\nQuery:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-instruct-v1.5"
     hf_id: "HIT-TMG/KaLM-embedding-multilingual-mini-instruct-v1.5"
     query_prefix: "Instruct: Given a query, retrieve documents that answer the query.\nQuery:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "gemma-300m"
     hf_id: "google/embeddinggemma-300m"
     query_prefix: "task: search result | query:"
     passage_prefix: "title: none | text:"
+    index_passage_prefix: "title: none | text: "
     candidate: true
     backend: sentence_transformers
   - alias: "stella-en-400m-v5"
     hf_id: "NovaSearch/stella_en_400M_v5"
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query.\nQuery:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "octen-0.6b"
     hf_id: "Octen/Octen-Embedding-0.6B"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "solon-large"
     hf_id: "OrdalieTech/Solon-embeddings-large-0.1"
     query_prefix: "query:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "uae-large-v1"
     hf_id: "WhereIsAI/UAE-Large-V1"
     query_prefix: "Represent this sentence for searching relevant passages:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "gist-large"
     hf_id: "avsolatorio/GIST-large-Embedding-v0"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "croissant-v0.3"
     hf_id: "manu/sentence_croissant_alpha_v0.3"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "croissant-v0.4"
     hf_id: "manu/sentence_croissant_alpha_v0.4"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "mxbai-large-v1"
     hf_id: "mixedbread-ai/mxbai-embed-large-v1"
     query_prefix: "Represent this sentence for searching relevant passages:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "pixie-rune-v1"
     hf_id: "telepix/PIXIE-Rune-v1.0"
     query_prefix: "query:"
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "bilingual-large"
     hf_id: "Lajavaness/bilingual-embedding-large"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: false
     backend: sentence_transformers
   - alias: "openai-3-small"
     hf_id: "openai/text-embedding-3-small"
     query_prefix: ""
     passage_prefix: ""
+    index_passage_prefix: ""
     candidate: true
     backend: openai
