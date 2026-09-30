@@ -165,33 +165,10 @@ def run_sweep(
     return pd.concat(frames, ignore_index=True)
 
 
-# --- metrics used by the paper plots (for regression) ------------------------
-def auoscr(curve_k: pd.DataFrame) -> float:
-    df = curve_k.dropna(subset=["far", "ccr"]).sort_values("far")
-    if len(df) < 2 or df["far"].nunique() < 2:
-        return float("nan")
-    g = df.groupby("far", as_index=False)["ccr"].max().sort_values("far")
-    far, ccr = g["far"].to_numpy(), g["ccr"].to_numpy()
-    if far[0] > 0:
-        far, ccr = np.concatenate(([0.0], far)), np.concatenate(([ccr[0]], ccr))
-    if far[-1] < 1:
-        far, ccr = np.concatenate((far, [1.0])), np.concatenate((ccr, [ccr[-1]]))
-    trap = getattr(np, "trapezoid", None) or np.trapz
-    return float(trap(ccr, far))
-
-
-def ccr_at_fa(curve_k: pd.DataFrame, budget: int) -> float:
-    feasible = curve_k[curve_k["false_accepts"] <= budget]
-    return float(feasible["ccr"].max()) if len(feasible) else float("nan")
-
-
-def paper_metrics(curve: pd.DataFrame) -> pd.DataFrame:
-    """Per-k CCR@FA<=0, CCR@FA<=2, AUOSCR — the quantities the paper plots."""
-    out = []
-    for k, g in curve.groupby("k", sort=True):
-        out.append(dict(k=int(k), ccr_fa0=ccr_at_fa(g, 0),
-                        ccr_fa2=ccr_at_fa(g, 2), auoscr=auoscr(g)))
-    return pd.DataFrame(out)
+# --- metrics: canonical definitions live in plots/plot_ccr_0_oscr.py ---------
+# AUOSCR = monotone envelope + exact step integration (NOT trapezoid); CCR@FA<=c.
+# Re-exported here so callers may use them via this module, without reimplementing.
+from plots.plot_ccr_0_oscr import auoscr, ccr_at_fa, paper_metrics  # noqa: E402,F401
 
 
 # --- CLI ---------------------------------------------------------------------

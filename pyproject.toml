@@ -25,4 +25,4 @@ dependencies = [
 dev = ["pytest"]
 
 [tool.setuptools.packages.find]
-include = ["telltail*", "generic_queries*"]
+include = ["telltail*", "generic_queries*", "plots*"]

@@ -18,24 +18,8 @@ import pandas as pd
 
 PAPER = Path(__file__).resolve().parent.parent / "results" / "paper"
 
-
-def _auoscr(g: pd.DataFrame) -> float:
-    df = g.dropna(subset=["far", "ccr"]).sort_values("far")
-    if len(df) < 2 or df["far"].nunique() < 2:
-        return float("nan")
-    gg = df.groupby("far", as_index=False)["ccr"].max().sort_values("far")
-    far, ccr = gg["far"].to_numpy(), gg["ccr"].to_numpy()
-    if far[0] > 0:
-        far, ccr = np.r_[0.0, far], np.r_[ccr[0], ccr]
-    if far[-1] < 1:
-        far, ccr = np.r_[far, 1.0], np.r_[ccr, ccr[-1]]
-    trap = getattr(np, "trapezoid", None) or np.trapz
-    return float(trap(ccr, far))
-
-
-def _ccr_at_fa(g: pd.DataFrame, b: int) -> float:
-    f = g[g["false_accepts"] <= b]
-    return float(f["ccr"].max()) if len(f) else float("nan")
+# Canonical metrics (AUOSCR = monotone envelope + step integration, NOT trapezoid).
+from plots.plot_ccr_0_oscr import auoscr as _auoscr, ccr_at_fa as _ccr_at_fa  # noqa: E402
 
 
 def main() -> None:
