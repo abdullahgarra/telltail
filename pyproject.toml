@@ -7,15 +7,23 @@ name = "telltail"
 version = "0.1.0"
 description = "TellTail: fingerprinting retrievers in black-box systems"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
+# Abstract deps for the generic-query pipeline. Exact pins from the reference
+# environment are in requirements.txt (Python 3.12). The generic pipeline does
+# NOT depend on the private `tropt` optimizer library (that is only for the OPT
+# attack, which is out of scope for this release).
 dependencies = [
     "numpy",
     "pandas",
-    "faiss-cpu",
-    "sentence-transformers",
+    "scipy",
     "torch",
-    "openai",
+    "sentence-transformers",
+    "transformers",
+    "accelerate",
+    "einops",
+    "faiss-cpu",
     "datasets",
+    "openai",
     "python-dotenv",
     "matplotlib",
     "pyyaml",

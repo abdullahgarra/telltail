@@ -11,10 +11,18 @@ Reference implementation of the generic-query attacks **TellTail-Random** and
 
 ## Setup
 
+Reference environment: **Python 3.12** (results produced with the pinned versions
+in `requirements.txt` — torch 2.9.1 / CUDA 12.8, faiss-cpu, numpy 2.x).
+
 ```bash
-pip install -e .
-cp .env.example .env   # then fill in the paths (see below)
+python -m venv .venv && source .venv/bin/activate   # Python 3.12
+pip install -r requirements.txt                     # pinned reference versions
+pip install -e .                                    # the telltail package
+cp .env.example .env                                # then fill in the paths (below)
 ```
+
+The generic-query pipeline uses only standard PyPI packages — it does **not**
+require the private OPT-attack optimizer library.
 
 `.env` variables (all paths resolved only through these — no hardcoded paths):
 

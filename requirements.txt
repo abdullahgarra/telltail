@@ -1,0 +1,31 @@
+# Pinned from the reference environment (conda env `tropt`) that produced the
+# results. Python 3.12 (see README). Create a fresh venv and `pip install -r
+# requirements.txt`.
+#
+# torch is pinned to 2.9.1; the reference build was CUDA 12.8 (cu128). The CPU
+# wheel works too (retrieval search runs on faiss-cpu). For a specific CUDA build:
+#   pip install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128
+
+# --- core numerics ---
+numpy==2.4.1
+pandas==2.3.3
+scipy==1.16.3
+
+# --- embedding models / deep learning stack (version-sensitive) ---
+torch==2.9.1
+sentence-transformers==5.2.0
+transformers==4.57.3
+tokenizers==0.22.2
+huggingface-hub==0.36.2
+accelerate==1.12.0
+einops==0.8.1            # required by some retrievers (e.g. nomic)
+
+# --- retrieval / data / api ---
+faiss-cpu==1.13.2
+datasets==4.8.5
+openai==2.15.0
+
+# --- config / plotting ---
+python-dotenv==1.2.1
+matplotlib==3.10.8
+PyYAML==6.0.3
