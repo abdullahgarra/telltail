@@ -47,23 +47,23 @@ with `verifyBatches.py` / `reduceBatches.py` helpers).
 The builder embeds passages with **`index_passage_prefix`** (in
 `configs/models.yaml`) — the prefix each frozen index was *actually* built with —
 so it reproduces the released indices rather than "fixing" them. This is separate
-from `passage_prefix`, which the **scoring** stage used (and which the regression
-validated).
+from `passage_prefix`, which the **scoring** stage used.
 
-For 47/53 models the two agree. For **5 models the released index was built with a
-different (usually empty) passage prefix than the scoring stage used** — a known
-property of the released indices, not something the builder corrects:
+`index_passage_prefix` was determined **empirically** by an SQ8 code-match test
+(`_local/tests/index_check`): for each model, sampled indexed passages are
+re-embedded and re-compressed with the frozen index's own quantizer; the prefix
+that reproduces the stored codes (~99%+ exact, rest off-by-1 from GPU float noise)
+is the one the index was built with. It equals `passage_prefix` for **51/53**
+models. Only **2 targets' indices were built with a different passage prefix than
+the scoring stage used** — a documented property of the released indices, not a
+correction:
 
-| model | `index_passage_prefix` (frozen index) | `passage_prefix` (scoring) |
+| model | `index_passage_prefix` (frozen index, verified) | `passage_prefix` (scoring) |
 |---|---|---|
-| e5-base | `""` | `"passage: "` |
-| nomic-v1.5 | `""` | `"search_document: "` |
-| nomic-v1 | `""` | `"search_document: "` |
-| jina-v5-small | `""` | `"Document:"` |
 | gemma-300m | `"title: none | text: "` (trailing space) | `"title: none | text:"` |
+| jina-v5-small | `""` (empty) | `"Document:"` |
 
-So these targets' indices were built **without** the recommended passage prefix;
-their scoring caches used the correct one. `build_faiss.py` uses
-`index_passage_prefix` to match the frozen indices exactly. (The `index_check`
-test under `_local/tests/` empirically confirms which prefix each frozen index
-was built with.)
+Verified code-match at the winning prefix: gemma **98.5% exact** (0% for the
+no-trailing-space variant — the trailing space is *not* tokenizer-ignored),
+jina-v5-small **99.7% exact** (0% for `Document:`). `build_faiss.py` uses
+`index_passage_prefix`, so a rebuild matches these frozen indices.

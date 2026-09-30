@@ -42,20 +42,19 @@ def extract_instructions(src_py: Path) -> dict:
     return ns["MODEL_INSTRUCTIONS"]
 
 
-def extract_doc_prefix(build_py: Path) -> dict:
-    """Exec the MODEL_DOC_PREFIX dict from buildFAISSindices_SQ_bucket.py.
-
-    This is the passage prefix the FROZEN indices were actually built with
-    (which differs from MODEL_INSTRUCTIONS' passage_prefix for a few models).
-    """
-    text = build_py.read_text(encoding="utf-8")
-    m = re.search(r"^MODEL_DOC_PREFIX.*?=\s*\{.*?^\}", text, re.S | re.M)
-    if not m:
-        raise SystemExit(f"could not locate MODEL_DOC_PREFIX in {build_py}")
-    code = re.sub(r"MODEL_DOC_PREFIX\s*:[^=]+=", "MODEL_DOC_PREFIX =", m.group(0), count=1)
-    ns: dict = {}
-    exec(compile(code, str(build_py), "exec"), ns)
-    return ns["MODEL_DOC_PREFIX"]
+# index_passage_prefix = the passage prefix each FROZEN index was actually built
+# with. Empirically determined by the SQ8 code-match test (_local/tests/index_check):
+# it equals passage_prefix for every model EXCEPT these two, where the frozen index
+# was built with a different prefix than the scoring stage used.
+#   - gemma-300m: a trailing space   ("title: none | text: " vs scoring "…text:")
+#   - jina-v5-small: empty            (""                     vs scoring "Document:")
+# (The old buildFAISSindices MODEL_DOC_PREFIX was unreliable — it wrongly implied
+#  e5-base/nomic-v1.5 used empty prefixes; the code-match test showed they use
+#  passage_prefix.)
+EMPIRICAL_INDEX_PREFIX = {
+    "gemma-300m": "title: none | text: ",
+    "jina-v5-small": "",
+}
 
 
 def dq(s: str) -> str:
@@ -71,15 +70,11 @@ def main() -> None:
                     help="Dir with generate_rankings_byK.py and model_map.json")
     ap.add_argument("--out", required=True, type=Path,
                     help="Output path for models.yaml")
-    ap.add_argument("--index-prefix-src", type=Path, default=None,
-                    help="Path to buildFAISSindices_SQ_bucket.py "
-                         "(source of index_passage_prefix = MODEL_DOC_PREFIX)")
     args = ap.parse_args()
 
     instr = extract_instructions(args.src / "generate_rankings_byK.py")
     model_map = json.loads(
         (args.src / "model_map.json").read_text(encoding="utf-8"))
-    doc_prefix = extract_doc_prefix(args.index_prefix_src) if args.index_prefix_src else {}
 
     lines = [
         "# TellTail model registry (53 models; 19 candidates).",
@@ -99,10 +94,9 @@ def main() -> None:
             f"    hf_id: {dq(hf_id)}",
             f"    query_prefix: {dq(ins.get('query_prefix', ''))}",
             f"    passage_prefix: {dq(ins.get('passage_prefix', ''))}",
-            # index_passage_prefix = the prefix the FROZEN index was built with
-            # (MODEL_DOC_PREFIX in the old builder; .get default '' matches its
-            # own .get(model, '')). Differs from passage_prefix for a few models.
-            f"    index_passage_prefix: {dq(doc_prefix.get(hf_id, ''))}",
+            # index_passage_prefix = passage_prefix, except the empirically-
+            # confirmed exceptions (gemma-300m trailing space, jina-v5-small empty).
+            f"    index_passage_prefix: {dq(EMPIRICAL_INDEX_PREFIX.get(alias, ins.get('passage_prefix', '')))}",
             f"    candidate: {'true' if is_cand else 'false'}",
             f"    backend: {backend}",
         ]

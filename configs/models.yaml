@@ -28,7 +28,7 @@ models:
     hf_id: "intfloat/e5-base-v2"
     query_prefix: "query: "
     passage_prefix: "passage: "
-    index_passage_prefix: ""
+    index_passage_prefix: "passage: "
     candidate: true
     backend: sentence_transformers
   - alias: "e5-large"
@@ -112,14 +112,14 @@ models:
     hf_id: "nomic-ai/nomic-embed-text-v1.5"
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
-    index_passage_prefix: ""
+    index_passage_prefix: "search_document: "
     candidate: true
     backend: sentence_transformers
   - alias: "nomic-v1"
     hf_id: "nomic-ai/nomic-embed-text-v1"
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
-    index_passage_prefix: ""
+    index_passage_prefix: "search_document: "
     candidate: false
     backend: sentence_transformers
   - alias: "gtr-t5-base"
