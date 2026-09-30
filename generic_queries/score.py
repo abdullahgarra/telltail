@@ -71,6 +71,8 @@ def add_arguments(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--targets", default="", help="Optional comma-separated target aliases.")
     ap.add_argument("--candidates", default="",
                     help="Optional comma-separated candidate aliases (default: all registry models).")
+    ap.add_argument("--max-seq-length", type=int, default=512,
+                    help="Cap encoder max_seq_length (matches the frozen score caches).")
     ap.add_argument("--skip-existing", action="store_true")
 
 
@@ -121,6 +123,12 @@ def main(args) -> None:
         hf_id = reg[m]["hf_id"]
         print(f"[score] candidate {m} ({hf_id})")
         encoder = None if is_openai(m) else load_encoder(m, args.device)
+        if encoder is not None:  # cap seq length to match the frozen score caches
+            try:
+                cur = int(getattr(encoder, "max_seq_length", args.max_seq_length) or args.max_seq_length)
+                encoder.max_seq_length = min(cur, args.max_seq_length)
+            except Exception:
+                pass
         q_emb_cache: Dict[int, np.ndarray] = {}
 
         def q_emb_for(Q_eff: int) -> np.ndarray:

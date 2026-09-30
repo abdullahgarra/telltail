@@ -99,6 +99,8 @@ Exact paper configs: budgets `1,5,10,12,15,18,20`, seed `1337`, corpus
 
 ## Notes
 
-- Doc-id and index building are not shipped (indices are ~8.8M passages each);
-  `retrieve` rebuilds signatures from local FAISS indices via `$TELLTAIL_INDEX_DIR`.
-- The OpenAI key is read only from the environment — there is no API-key CLI flag.
+- The **built** FAISS indices are not shipped (one IVF+SQ8 index over ~8.8M MS
+  MARCO passages per model — multi-GB each). The **code** to build them is in
+  `indexing/` (`build_faiss.py`; `indexing/openai/` for the OpenAI Batch pipeline).
+  `retrieve` then searches them via `$TELLTAIL_INDEX_DIR`.
+- The OpenAI key is read only from the environment.
