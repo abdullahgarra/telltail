@@ -1,6 +1,8 @@
 .env
 outputs/
+results/paper_repro/
 *.index
 *.npy
 __pycache__/
 .ipynb_checkpoints/
+tools/run_regression.py
