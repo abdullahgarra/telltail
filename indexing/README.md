@@ -42,28 +42,9 @@ ported into this repo): `closedSource/cache_faiss/cache_openai/`
 (`make_msmarco_batches.py` → `run_openai_batches.py` → `build_faiss_from_shards.py`,
 with `verifyBatches.py` / `reduceBatches.py` helpers).
 
-## Passage prefixes — reproducing the frozen indices
+## Passage prefixes
 
-The builder embeds passages with **`index_passage_prefix`** (in
-`configs/models.yaml`) — the prefix each frozen index was *actually* built with —
-so it reproduces the released indices rather than "fixing" them. This is separate
-from `passage_prefix`, which the **scoring** stage used.
-
-`index_passage_prefix` was determined **empirically** by an SQ8 code-match test
-(`_local/tests/index_check`): for each model, sampled indexed passages are
-re-embedded and re-compressed with the frozen index's own quantizer; the prefix
-that reproduces the stored codes (~99%+ exact, rest off-by-1 from GPU float noise)
-is the one the index was built with. It equals `passage_prefix` for **51/53**
-models. Only **2 targets' indices were built with a different passage prefix than
-the scoring stage used** — a documented property of the released indices, not a
-correction:
-
-| model | `index_passage_prefix` (frozen index, verified) | `passage_prefix` (scoring) |
-|---|---|---|
-| gemma-300m | `"title: none | text: "` (trailing space) | `"title: none | text:"` |
-| jina-v5-small | `""` (empty) | `"Document:"` |
-
-Verified code-match at the winning prefix: gemma **98.5% exact** (0% for the
-no-trailing-space variant — the trailing space is *not* tokenizer-ignored),
-jina-v5-small **99.7% exact** (0% for `Document:`). `build_faiss.py` uses
-`index_passage_prefix`, so a rebuild matches these frozen indices.
+The builder embeds passages with each model's **`index_passage_prefix`** from
+`configs/models.yaml`, then L2-normalizes. For nearly all models this is the same
+as `passage_prefix`; the registry records it per model so a rebuild is consistent
+with the released indices.
