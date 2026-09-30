@@ -1,31 +1,17 @@
 # secrets / env
 .env
 
-# local-only docs (kept outside the repo, but ignore defensively if created here)
-REGRESSION.md
-telltail_audit.md
+# ALL local, non-released stuff lives here (scratch, tests, logs, regression
+# notes, symlinked indexes, golden copies). Convention: nothing local outside _local/.
+_local/
 
-# generated outputs / run artifacts
-outputs/
-results/paper_repro/
-logs/
+# generated / large artifacts (defensive, anywhere)
+*.index
+*.npy
 *.log
 *.out
 *.err
 
-# local machine-specific helpers (hardcode absolute source paths)
-tools/run_regression.py
-tools/build_index_symlinks.py
-
-# large / regenerable data
-*.index
-*.npy
-
-# index symlink dir (machine-specific; points at large indices)
-indexes/
-
 # python
 __pycache__/
 .ipynb_checkpoints/
-tools/smoke_test.py
-tools/smoke_test.slurm
