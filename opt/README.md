@@ -1,8 +1,9 @@
 # opt/ — TellTail-OPT (model-specific optimized queries)
 
-TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE / RASLITE+
-discrete-text optimizer) so that a carrier query, once suffixed, retrieves a chosen target
-under the victim retriever — a stronger fingerprint than the Random / Topic query variants.
+TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE discrete-text
+optimizer) so that a carrier query, once suffixed, retrieves a chosen target under the
+victim retriever — a stronger fingerprint than the Random / Topic query variants.
+(The RASLITE+ black-box path for API-only models is not yet ported; see status below.)
 
 ## Pipeline
 

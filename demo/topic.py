@@ -1,19 +1,12 @@
-"""`python -m demo topic` — the topic-level (response-only) attack demo.
+"""`python -m demo topic` — topic-level (response-only) attack demo.
 
-The response-only analogue of `demo fingerprint`. Each candidate ships a set of optimized
-*topic* triggers (crafted toward the centroid of a topic — here Harry Potter — via
-`opt.optimize --mode topic`). We build one small index per victim from the demo corpus,
-run every candidate's triggers, and measure whether the victim's **top-3 retrieved
-passages are all on-topic (Harry Potter)** — the signal a response-only attacker sees
-(the RAG answer would be about HP). A victim is fingerprinted as the candidate whose
-topic triggers reliably drive its top-3 on-topic.
+Runs each candidate's topic triggers against every victim and fingerprints a victim as the
+candidate whose triggers drive its top-3 retrieved passages on-topic (Harry Potter).
+Prints a prediction table (unique rate>0.5 -> that candidate, else UNK/ABSTAIN) and writes
+a candidate x victim heatmap.
 
-Score: S[candidate, victim] = mean over that candidate's query groups of 1[all top-3
-passages are HP]. Prediction: unique S>0.5 -> that candidate, none -> UNK, several ->
-ABSTAIN. Output: a prediction table + a candidate x victim heatmap.
-
-CPU-runnable; same shipped index path as `demo fingerprint` (demo/index.build_index over
-demo/data/corpus.jsonl). HP is detected by keyword (approximation, as in the paper).
+On-topic is decided by keyword match (CPU, no key); `--judge` instead generates the RAG
+answer and scores it with the LLM judge (needs OPENAI_API_KEY + DEEPINFRA_API_KEY).
 """
 from __future__ import annotations
 
@@ -32,8 +25,7 @@ DEMO_VICTIMS = ["minilm-l6", "minilm-l12", "e5-small", "multilingual-e5-small"]
 TOPK = 3
 TAU = 0.5
 
-# Harry-Potter keyword list (approximate on-topic detector; same spirit as the paper).
-# Stored lowercased so matching is case-insensitive.
+# Harry-Potter keyword list for the keyword path (lowercased; case-insensitive match).
 HP_KEYWORDS = [
     "potter", "harry potter", "the potter boy", "the boy who lived", "hermione",
     "hermione granger", "ron weasley", "weasley", "dumbledore", "albus dumbledore",
@@ -57,7 +49,7 @@ def _is_hp(text: str) -> bool:
 
 def _out_dir() -> Path:
     base = os.environ.get("TELLTAIL_OUT_DIR")
-    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "_local/demo")
+    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "outputs/demo")
     d.mkdir(parents=True, exist_ok=True)
     return d
 

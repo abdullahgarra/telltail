@@ -39,7 +39,7 @@ def _predict(col: pd.Series, candidates: set) -> str:
 
 def _out_dir() -> Path:
     base = os.environ.get("TELLTAIL_OUT_DIR")
-    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "_local/demo")
+    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "outputs/demo")
     d.mkdir(parents=True, exist_ok=True)
     return d
 

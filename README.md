@@ -22,10 +22,11 @@ suffixed query steers the victim retriever toward a chosen <b>target passage</b>
 
 ## 🪶 Quick demo
 
-Three runnable things, **no 8.8M-passage index required**. The demo ships a small corpus
-sampled from MS MARCO (`demo/data/`), suitable for both the passage-level and topic-level
-attacks, and builds a small index per victim on the fly (cached after the first run).
-Paper-scale reproduction is in [Full reproduction](#full-reproduction).
+Three runnable things, **no 8.8M-passage index required** and **no `.env` needed** (outputs
+default to `outputs/demo/`). The repo ships a small corpus of **~5.6k MS MARCO passages**
+(`demo/data/`) — used to run all the optimized queries against the four victim models — and
+builds a small index per victim on the fly (cached after the first run). Paper-scale
+reproduction is in [Full reproduction](#full-reproduction).
 
 ### 1. Fingerprint the victims &nbsp;·&nbsp; `python -m demo fingerprint` (CPU)
 
@@ -117,7 +118,7 @@ current API differs). See `third_party/tropt/NOTICE.md` for attribution and the 
 
 ## 🪶 TellTail-OPT
 
-`opt/` crafts per-model **optimized trigger suffixes** (GASLITE / RASLITE+) so a carrier
+`opt/` crafts per-model **optimized trigger suffixes** (GASLITE) so a carrier
 query, once suffixed, retrieves a chosen target under the victim retriever — a stronger
 fingerprint than the Topic/Random query variants.
 

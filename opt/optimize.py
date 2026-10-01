@@ -18,7 +18,7 @@ optimization target was the **bare passage** (no passage prefix). We replicate t
 to reproduce the paper; see `PassageTarget`.
 
 Usage:
-    python -m opt.optimize --queries opt/inputs/queries.csv --out opt/_local/phase1
+    python -m opt.optimize --queries opt/inputs/queries.csv --out outputs/phase1
 """
 from __future__ import annotations
 

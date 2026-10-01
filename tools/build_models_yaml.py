@@ -42,29 +42,17 @@ def extract_instructions(src_py: Path) -> dict:
     return ns["MODEL_INSTRUCTIONS"]
 
 
-# index_passage_prefix = the passage prefix each FROZEN index was actually built
-# with. Empirically determined by the SQ8 code-match test (_local/tests/index_check):
-# it equals passage_prefix for every model EXCEPT these two, where the frozen index
-# was built with a different prefix than the scoring stage used.
-#   - gemma-300m: a trailing space   ("title: none | text: " vs scoring "…text:")
-#   - jina-v5-small: empty            (""                     vs scoring "Document:")
-# (The old buildFAISSindices MODEL_DOC_PREFIX was unreliable — it wrongly implied
-#  e5-base/nomic-v1.5 used empty prefixes; the code-match test showed they use
-#  passage_prefix.)
+# index_passage_prefix = the passage prefix each FROZEN index was actually built with.
+# Equals passage_prefix for every model except these two (confirmed by SQ8 code-match):
 EMPIRICAL_INDEX_PREFIX = {
-    "gemma-300m": "title: none | text: ",
-    "jina-v5-small": "",
+    "gemma-300m": "title: none | text: ",   # trailing space vs scoring's "...text:"
+    "jina-v5-small": "",                     # empty vs scoring's "Document:"
 }
 
-# index_max_seq_length = the exact max_seq_length each FROZEN index was built with,
-# resolved from index provenance (which of the two original builders made it) and
-# confirmed by SQ8 code-match. The bucket/ST path used min(model_default, 512); the
-# GASLITE RetrieverModel path forced a flat 512 (tokenizer.model_max_length=512), so
-# short-default models on that path (minilm-l6=256, mpnet=384) were indexed at 512.
-# Every non-OpenAI model is 512 EXCEPT these short ST-path defaults. build_faiss.py
-# sets encoder.max_seq_length to this value directly (no min()). OpenAI models are not
-# built here (Batch-API pipeline truncates by chars), so they carry no value.
-# (Provenance details are in _local audit notes, not shipped.)
+# index_max_seq_length = the exact max_seq_length each FROZEN index was built with.
+# Every non-OpenAI model is 512 except the short ST-path defaults below; build_faiss.py
+# sets encoder.max_seq_length to this value directly. OpenAI models carry no value
+# (built by the Batch-API pipeline).
 INDEX_MAX_SEQ_LENGTH_DEFAULT = 512
 INDEX_MAX_SEQ_LENGTH = {
     "minilm-l12": 128,

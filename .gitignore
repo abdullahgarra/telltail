@@ -5,6 +5,9 @@
 # notes, symlinked indexes, golden copies). Convention: nothing local outside _local/.
 _local/
 
+# default output dir when TELLTAIL_OUT_DIR is unset (demo / judge / release land here)
+outputs/
+
 # generated / large artifacts (defensive, anywhere)
 *.index
 *.npy
@@ -15,3 +18,6 @@ _local/
 # python
 __pycache__/
 .ipynb_checkpoints/
+
+# dev-only demo-data builder (builds BASE corpus; not the shipped enriched one)
+demo/_build_data.py

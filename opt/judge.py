@@ -270,7 +270,7 @@ def main():
     out = args.out
     if out is None:
         base = os.environ.get("TELLTAIL_OUT_DIR")
-        out = (Path(base) / "tm3_judge") if base else Path("_local/tm3_judge")
+        out = (Path(base) / "tm3_judge") if base else (Path(__file__).resolve().parents[1] / "outputs/tm3_judge")
     run(args.responses, out, args.model, args.base_url,
         sample_for_review=args.sample_for_review, self_groups=args.self_query_groups,
         other_n=args.random_other_count, seed=args.seed, overwrite=args.overwrite,

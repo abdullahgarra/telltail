@@ -27,7 +27,7 @@ def load_corpus(path: Path) -> Tuple[List[str], List[str]]:
 
 def _cache_dir() -> Path:
     base = os.environ.get("TELLTAIL_OUT_DIR")
-    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "_local/demo/indexes")
+    d = (Path(base) / "demo") if base else (Path(__file__).resolve().parents[1] / "outputs/demo/indexes")
     d.mkdir(parents=True, exist_ok=True)
     return d
 
