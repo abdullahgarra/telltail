@@ -26,7 +26,7 @@
 #         """
 #         # os.environ["GOOGLE_API_KEY"] = ...  # required to be set externally
 
-#         self.client = genai.Client()  # reads GOOGLE_API_KEY from the environment
+#         self.client = genai.Client(api_key="<API_KEY_GOOGLE>")
 #         self.model_name = model_name
 #         self.d_model = d_model  # for gemini-embedding-001: could be 768, 1536, or 3072
 #         self.text_to_task_type = {
@@ -104,7 +104,7 @@ class GeminiEncoderModel(EncoderBaseModel, LossTextAccessMixin):
             model_name: The name of the Gemini embedding model to use.
             d_model: The dimensionality of the embeddings (e.g., 768, 3072).
         """
-        self.client = genai.Client()  # reads GOOGLE_API_KEY from the environment
+        self.client = genai.Client(api_key="<API_KEY_GOOGLE>")
 
         self.model_name = model_name
         self.d_model = d_model  # for gemini-embedding-001: could be 768, 1536, or 3072
