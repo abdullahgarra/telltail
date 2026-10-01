@@ -49,8 +49,9 @@ def evaluate_victims(victims, device=None):
     from sentence_transformers import SentenceTransformer
     from opt.evaluate import build_eval_query, find_rank_oss
     from generic_queries._common import normalize_docid
-    from telltail.models import load_registry
+    from telltail.models import load_registry, _default_device
 
+    device = _default_device(device)   # resolve auto -> cpu/cuda once (falls back off unusable GPUs)
     ids, texts = load_corpus(DATA / "corpus.jsonl")
     ready = list(csv.DictReader(open(DATA / "ready_queries.csv")))
     reg = load_registry()

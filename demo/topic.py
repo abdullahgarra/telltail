@@ -90,8 +90,9 @@ def evaluate_victims(victims, device=None, judge=False):
     import faiss
     from sentence_transformers import SentenceTransformer
     from opt.retrieve import build_topic_eval_query
-    from telltail.models import load_registry
+    from telltail.models import load_registry, _default_device
 
+    device = _default_device(device)   # resolve auto -> cpu/cuda once (falls back off unusable GPUs)
     ids, texts = load_corpus(DATA / "corpus.jsonl")
     id2text = dict(zip(map(str, ids), texts))
     ready = list(csv.DictReader(open(DATA / "topic_ready_queries.csv")))
