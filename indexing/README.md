@@ -23,6 +23,16 @@ prefixes + OpenAI/ST backend) and L2-normalized so inner product = cosine.
 
 Indices are **not** committed (multi-GB each).
 
+Each model is embedded at the exact `index_max_seq_length` recorded for it in
+`configs/models.yaml` (the cap its frozen index was built with); `build_faiss.py`
+reads that value directly and aborts if it is missing.
+
+## Reproducibility
+
+Rebuilt indexes match the released ones to within one SQ8 quantization step (a
+consequence of GPU floating-point nondeterminism in the embedding pass).
+<!-- TODO: link to released indexes once hosting is decided -->
+
 ## OpenAI model (`openai-3-small`) — multi-stage Batch-API build
 
 `build_faiss.py` **skips** the OpenAI model: embedding ~8.8M passages via

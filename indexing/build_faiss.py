@@ -39,7 +39,7 @@ def sanitize(hf_id: str) -> str:
 
 def build_one(alias: str, hf_id: str, out_dir: Path, corpus_texts: List[str],
               docids: np.ndarray, *, batch_size: int, chunk_size: int,
-              train_samples: int, nlist: int, device, max_seq_length: int,
+              train_samples: int, nlist: int, device, index_max_seq_length: int,
               skip_existing: bool) -> None:
     import faiss
     from telltail.models import embed, load_encoder, is_openai
@@ -54,11 +54,11 @@ def build_one(alias: str, hf_id: str, out_dir: Path, corpus_texts: List[str],
     encoder = None
     if not is_openai(alias):
         encoder = load_encoder(alias, device)
-        try:
-            encoder.max_seq_length = min(int(getattr(encoder, "max_seq_length", 512) or 512),
-                                         max_seq_length)
-        except Exception:
-            pass
+        # Use the exact cap each frozen index was built with (configs/models.yaml:
+        # index_max_seq_length). Set directly, no min() — the two original builders
+        # disagreed on short-default models (the RetrieverModel path forced 512 flat),
+        # so a min() rule would silently mis-cap minilm-l6/mpnet. See indexing/README.md.
+        encoder.max_seq_length = int(index_max_seq_length)
 
     def embed_norm(texts: List[str]) -> np.ndarray:
         # Use index_passage_prefix (what the FROZEN indices were built with, which
@@ -114,7 +114,6 @@ def main() -> None:
     ap.add_argument("--chunk-size", type=int, default=100_000)
     ap.add_argument("--train-samples", type=int, default=100_000)
     ap.add_argument("--nlist", type=int, default=8192)
-    ap.add_argument("--max-seq-length", type=int, default=512)
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -151,10 +150,15 @@ def main() -> None:
     for alias in aliases:
         if alias not in reg:
             print(f"[warn] unknown alias {alias}, skipping"); continue
+        if "index_max_seq_length" not in reg[alias]:
+            raise SystemExit(
+                f"[fatal] {alias}: configs/models.yaml has no index_max_seq_length. "
+                "Every buildable model must record the exact cap its frozen index used.")
         build_one(alias, reg[alias]["hf_id"], out_dir, corpus_texts, docids,
                   batch_size=args.batch_size, chunk_size=args.chunk_size,
                   train_samples=args.train_samples, nlist=args.nlist,
-                  device=args.device, max_seq_length=args.max_seq_length,
+                  device=args.device,
+                  index_max_seq_length=int(reg[alias]["index_max_seq_length"]),
                   skip_existing=not args.force)
     print(f"[done] indices under {out_dir}")
 

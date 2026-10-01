@@ -8,6 +8,7 @@ models:
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "qwen-4b"
@@ -15,6 +16,7 @@ models:
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "e5-small"
@@ -22,6 +24,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "e5-base"
@@ -29,6 +32,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "e5-large"
@@ -36,6 +40,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "multilingual-e5-small"
@@ -43,6 +48,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-base"
@@ -50,6 +56,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-large"
@@ -57,6 +64,7 @@ models:
     query_prefix: "query: "
     passage_prefix: "passage: "
     index_passage_prefix: "passage: "
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "multilingual-e5-large-instruct"
@@ -64,6 +72,7 @@ models:
     query_prefix: "Retrieve semantically similar text."
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "gte-modernbert"
@@ -71,6 +80,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "gte-large-v1.5"
@@ -78,6 +88,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "gte-base-v1.5"
@@ -85,6 +96,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "gte-multi"
@@ -92,6 +104,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "gte-base"
@@ -99,6 +112,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "nomic-modernbert"
@@ -106,6 +120,7 @@ models:
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
     index_passage_prefix: "search_document: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "nomic-v1.5"
@@ -113,6 +128,7 @@ models:
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
     index_passage_prefix: "search_document: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "nomic-v1"
@@ -120,6 +136,7 @@ models:
     query_prefix: "search_query: "
     passage_prefix: "search_document: "
     index_passage_prefix: "search_document: "
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "gtr-t5-base"
@@ -127,6 +144,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "gtr-t5-large"
@@ -134,6 +152,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "minilm-l6"
@@ -141,6 +160,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "minilm-l12"
@@ -148,6 +168,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 128
     candidate: true
     backend: sentence_transformers
   - alias: "mpnet"
@@ -155,6 +176,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "paraphrase-minilm-l6"
@@ -162,6 +184,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 128
     candidate: false
     backend: sentence_transformers
   - alias: "paraphrase-multi-minilm-l12"
@@ -169,6 +192,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 128
     candidate: false
     backend: sentence_transformers
   - alias: "paraphrase-multi-mpnet"
@@ -176,6 +200,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 128
     candidate: false
     backend: sentence_transformers
   - alias: "sentence-t5-base"
@@ -183,6 +208,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 256
     candidate: false
     backend: sentence_transformers
   - alias: "sentence-t5-large"
@@ -190,6 +216,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 256
     candidate: false
     backend: sentence_transformers
   - alias: "bge-small"
@@ -197,6 +224,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "bge-base"
@@ -204,6 +232,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "bge-large"
@@ -211,6 +240,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "bge-m3"
@@ -218,6 +248,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v3"
@@ -225,6 +256,7 @@ models:
     query_prefix: "Represent the query for retrieving evidence documents:"
     passage_prefix: "Represent the document for retrieval: "
     index_passage_prefix: "Represent the document for retrieval: "
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v5-small"
@@ -232,6 +264,7 @@ models:
     query_prefix: "Query:"
     passage_prefix: "Document:"
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v2-base"
@@ -239,6 +272,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v2-small"
@@ -246,6 +280,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "jina-v1-base"
@@ -253,6 +288,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "snowflake-v2"
@@ -260,6 +296,7 @@ models:
     query_prefix: "query:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "snowflake-v1"
@@ -267,6 +304,7 @@ models:
     query_prefix: "query:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-v1"
@@ -274,6 +312,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-instruct-v1"
@@ -281,6 +320,7 @@ models:
     query_prefix: "Instruct: Given a query, retrieve documents that answer the query.\nQuery:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "kalm-mini-instruct-v1.5"
@@ -288,6 +328,7 @@ models:
     query_prefix: "Instruct: Given a query, retrieve documents that answer the query.\nQuery:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "gemma-300m"
@@ -295,6 +336,7 @@ models:
     query_prefix: "task: search result | query:"
     passage_prefix: "title: none | text:"
     index_passage_prefix: "title: none | text: "
+    index_max_seq_length: 512
     candidate: true
     backend: sentence_transformers
   - alias: "stella-en-400m-v5"
@@ -302,6 +344,7 @@ models:
     query_prefix: "Instruct: Given a web search query, retrieve relevant passages that answer the query.\nQuery:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "octen-0.6b"
@@ -309,6 +352,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "solon-large"
@@ -316,6 +360,7 @@ models:
     query_prefix: "query:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "uae-large-v1"
@@ -323,6 +368,7 @@ models:
     query_prefix: "Represent this sentence for searching relevant passages:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "gist-large"
@@ -330,6 +376,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "croissant-v0.3"
@@ -337,6 +384,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "croissant-v0.4"
@@ -344,6 +392,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "mxbai-large-v1"
@@ -351,6 +400,7 @@ models:
     query_prefix: "Represent this sentence for searching relevant passages:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "pixie-rune-v1"
@@ -358,6 +408,7 @@ models:
     query_prefix: "query:"
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "bilingual-large"
@@ -365,6 +416,7 @@ models:
     query_prefix: ""
     passage_prefix: ""
     index_passage_prefix: ""
+    index_max_seq_length: 512
     candidate: false
     backend: sentence_transformers
   - alias: "openai-3-small"

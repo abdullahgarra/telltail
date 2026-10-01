@@ -56,6 +56,25 @@ EMPIRICAL_INDEX_PREFIX = {
     "jina-v5-small": "",
 }
 
+# index_max_seq_length = the exact max_seq_length each FROZEN index was built with,
+# resolved from index provenance (which of the two original builders made it) and
+# confirmed by SQ8 code-match. The bucket/ST path used min(model_default, 512); the
+# GASLITE RetrieverModel path forced a flat 512 (tokenizer.model_max_length=512), so
+# short-default models on that path (minilm-l6=256, mpnet=384) were indexed at 512.
+# Every non-OpenAI model is 512 EXCEPT these short ST-path defaults. build_faiss.py
+# sets encoder.max_seq_length to this value directly (no min()). OpenAI models are not
+# built here (Batch-API pipeline truncates by chars), so they carry no value.
+# (Provenance details are in _local audit notes, not shipped.)
+INDEX_MAX_SEQ_LENGTH_DEFAULT = 512
+INDEX_MAX_SEQ_LENGTH = {
+    "minilm-l12": 128,
+    "paraphrase-minilm-l6": 128,
+    "paraphrase-multi-minilm-l12": 128,
+    "paraphrase-multi-mpnet": 128,
+    "sentence-t5-base": 256,
+    "sentence-t5-large": 256,
+}
+
 
 def dq(s: str) -> str:
     """Render a YAML double-quoted scalar that round-trips exactly."""
@@ -97,6 +116,13 @@ def main() -> None:
             # index_passage_prefix = passage_prefix, except the empirically-
             # confirmed exceptions (gemma-300m trailing space, jina-v5-small empty).
             f"    index_passage_prefix: {dq(EMPIRICAL_INDEX_PREFIX.get(alias, ins.get('passage_prefix', '')))}",
+        ]
+        # index_max_seq_length: exact cap the frozen index used (encoder models only).
+        if backend != "openai":
+            lines.append(
+                f"    index_max_seq_length: "
+                f"{INDEX_MAX_SEQ_LENGTH.get(alias, INDEX_MAX_SEQ_LENGTH_DEFAULT)}")
+        lines += [
             f"    candidate: {'true' if is_cand else 'false'}",
             f"    backend: {backend}",
         ]

@@ -123,7 +123,14 @@ def main(args) -> None:
         hf_id = reg[m]["hf_id"]
         print(f"[score] candidate {m} ({hf_id})")
         encoder = None if is_openai(m) else load_encoder(m, args.device)
-        if encoder is not None:  # match build_score_cache.py: set 512 unconditionally
+        if encoder is not None:
+            # Score stage uses a flat 512 for EVERY model (matches the original
+            # build_score_cache.py, which set model.max_seq_length=512 unconditionally).
+            # This is independent of two other caps: retrieval (retrieve.py) uses each
+            # model's default, and index building (build_faiss.py) uses the per-model
+            # configs/models.yaml index_max_seq_length. Do not "unify" these — the
+            # golden score caches were built at 512, so changing it here breaks the
+            # regression (e.g. minilm-l6/mpnet have topic proxy passages >default).
             try:
                 encoder.max_seq_length = args.max_seq_length
             except Exception:
