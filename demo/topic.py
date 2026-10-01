@@ -62,8 +62,39 @@ def _out_dir() -> Path:
     return d
 
 
-def evaluate_victims(victims, device=None):
-    """Return long results: (attack_model, query_group, eval_model, all3_hp)."""
+def _make_judge():
+    """(generate_fn, judge_fn) for the --judge path. Needs OPENAI + DEEPINFRA keys.
+    generate: top-3 passages -> gpt-4o-mini RAG answer (same as opt.llm).
+    judge:    answer -> DeepSeek verdict (same as opt.judge)."""
+    import os
+    from openai import OpenAI
+    from opt import config as C
+    from opt.llm import build_prompt
+    from opt.judge import call_judge, DEFAULT_MODEL, DEFAULT_BASE_URL
+    from telltail.paths import data_dir as _  # ensures .env loaded  # noqa
+
+    oai = OpenAI()
+    dk = os.getenv("DEEPINFRA_API_KEY")
+    if not dk:
+        raise SystemExit("--judge needs DEEPINFRA_API_KEY (judge) and OPENAI_API_KEY (generate).")
+    judge_client = OpenAI(api_key=dk, base_url=DEFAULT_BASE_URL)
+
+    def generate(user_query, texts):
+        r = oai.chat.completions.create(model=C.LLM_MODEL, temperature=C.LLM_TEMPERATURE,
+                                        messages=[{"role": "user", "content": build_prompt(user_query, texts)}])
+        return r.choices[0].message.content or ""
+
+    def judge(answer):
+        return call_judge(judge_client, answer, DEFAULT_MODEL)["judgement"] == "true"
+    return generate, judge
+
+
+def evaluate_victims(victims, device=None, judge=False):
+    """Return long results: (attack_model, query_group, eval_model, all3_hp).
+
+    Default: all3_hp = all top-3 passages are on-topic by keyword (CPU, no key).
+    --judge: all3_hp = the LLM judge labels the generated RAG answer as on-topic
+    (needs OPENAI_API_KEY + DEEPINFRA_API_KEY; one generate + one judge call per cell)."""
     import faiss
     from sentence_transformers import SentenceTransformer
     from opt.retrieve import build_topic_eval_query
@@ -73,10 +104,14 @@ def evaluate_victims(victims, device=None):
     id2text = dict(zip(map(str, ids), texts))
     ready = list(csv.DictReader(open(DATA / "topic_ready_queries.csv")))
     reg = load_registry()
+    gen_fn = judge_fn = None
+    if judge:
+        gen_fn, judge_fn = _make_judge()
 
     rows = []
     for v in victims:
-        print(f"[demo] building/loading index for victim '{v}' ({len(ids)} passages)...", flush=True)
+        print(f"[demo] building/loading index for victim '{v}' ({len(ids)} passages)"
+              f"{' + generate/judge' if judge else ''}...", flush=True)
         index, docids = build_index(v, ids, texts, device=device, use_cache=True)
         model = SentenceTransformer(reg[v]["hf_id"], trust_remote_code=True, device=device)
         prefix = reg[v].get("query_prefix", "")
@@ -87,7 +122,12 @@ def evaluate_victims(victims, device=None):
             faiss.normalize_L2(q)
             _, I = index.search(q, TOPK)
             top = [str(docids[int(i)]) for i in I[0] if int(i) >= 0]
-            all3_hp = len(top) == TOPK and all(_is_hp(id2text.get(p, "")) for p in top)
+            if judge:
+                top_texts = [id2text.get(p, "") for p in top]
+                uq = f"{r['query_text']} {r['trigger_suffix']}".strip()
+                all3_hp = len(top) == TOPK and judge_fn(gen_fn(uq, top_texts))
+            else:
+                all3_hp = len(top) == TOPK and all(_is_hp(id2text.get(p, "")) for p in top)
             rows.append(dict(attack_model=r["attack_model"], query_group=r["query_group"],
                              eval_model=v, all3_hp=bool(all3_hp)))
         del model
@@ -123,9 +163,9 @@ def heatmap(S, candidates, victims, preds, path, k):
     return path
 
 
-def run(victims=None, device=None):
+def run(victims=None, device=None, judge=False):
     victims = victims or DEMO_VICTIMS
-    df = evaluate_victims(victims, device=device)
+    df = evaluate_victims(victims, device=device, judge=judge)
     candidates = sorted(df.attack_model.unique())
     cset = set(candidates)
 
@@ -144,15 +184,19 @@ def run(victims=None, device=None):
         preds[v] = _predict(mat[v], cset)
         print(f"  {v:<24} -> {preds[v]}")
 
-    png = heatmap(S, candidates, victims, preds, _out_dir() / "demo_topic_heatmap.png", TOPK)
+    tag = "judge" if judge else "keyword"
+    png = heatmap(S, candidates, victims, preds, _out_dir() / f"demo_topic_heatmap_{tag}.png", TOPK)
     print(f"\n[demo] heatmap -> {png}")
 
 
 def add_arguments(ap: argparse.ArgumentParser):
     ap.add_argument("--victims", default="", help="comma-separated victim aliases (default: the demo set)")
     ap.add_argument("--device", default=None, help="torch device (default: auto; CPU works)")
+    ap.add_argument("--judge", action="store_true",
+                    help="score cells by the LLM judge on generated RAG answers instead of keyword "
+                         "matching (needs OPENAI_API_KEY + DEEPINFRA_API_KEY; makes API calls)")
 
 
 def main(args):
     victims = [v.strip() for v in args.victims.split(",") if v.strip()] or None
-    run(victims=victims, device=args.device)
+    run(victims=victims, device=args.device, judge=getattr(args, "judge", False))

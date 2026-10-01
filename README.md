@@ -62,6 +62,9 @@ multilingual-e5-small   UNK
 
 Same victim set as `fingerprint`: the three registered candidates are identified and the
 unseen `multilingual-e5-small` returns **UNK**. Also writes a candidate×victim heatmap.
+By default "on-topic" is decided by **keyword match** (CPU, no key). Pass **`--judge`** to
+instead generate the RAG answer and score it with the LLM judge (the paper's criterion);
+this makes API calls and needs `OPENAI_API_KEY` (generation) + `DEEPINFRA_API_KEY` (judge).
 
 ### 3. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
 
