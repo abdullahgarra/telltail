@@ -41,9 +41,7 @@ multilingual-e5-small   UNK         UNK         UNK         UNK
 Three victims are in the candidate set and are identified; `multilingual-e5-small` is an
 **unseen** (non-candidate) multilingual sibling of `e5-small` and correctly returns **UNK** —
 the fingerprint isn't fooled by a closely related model it has never registered. The command
-also writes a top-3-rate heatmap (`S[candidate, victim]`, predicted cell outlined):
-
-<p align="center"><img src="assets/demo_heatmap.png" alt="demo top-3 heatmap" width="430"/></p>
+also writes a top-3-rate heatmap (`S[candidate, victim]`, predicted cell outlined).
 
 ### 2. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
 
@@ -109,7 +107,15 @@ See `opt/README.md` for the full flow and the threat-model status.
 
 ## Full reproduction
 
-The generic-query variants (**Topic**, **Random**) over the full MS MARCO index. One CLI,
+At paper scale, TellTail-OPT fingerprints the deployed retriever across the full 53-model
+zoo. Each candidate's optimized queries drive the target into the victim's top-3 almost
+only on the matching deployment — the diagonal (correct self-identification) dominates:
+
+<p align="center"><img src="assets/heatmap_top3_rate.png" alt="TellTail-OPT top-3 rate (19 candidates x 53 deployed models)" width="860"/></p>
+<p align="center"><sub>Top-3 rate <code>S[candidate, deployed model]</code> over the full MS MARCO index
+(19 candidates × 53 deployed retrievers); outlined diagonal = correct identification.</sub></p>
+
+The generic-query variants (**Topic**, **Random**) run over the same full index. One CLI,
 five stages: `python -m generic_queries {retrieve,fetch,score,evaluate,sweep}`.
 
 | Stage | Does | Needs |
