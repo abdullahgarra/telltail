@@ -8,9 +8,17 @@
 
 TellTail identifies the embedding retriever behind a black-box RAG system by probing it
 with crafted queries and reading which passages come back. Three query variants —
-**OPT** (model-specific optimized triggers), **Topic**, and **Random** — across two threat
-models (TM1 ordered, TM2 unordered top-k). The headline attack is **TellTail-OPT**, and the
-quickest way to see it is the demo below. 🪶
+**OPT** (model-specific optimized triggers), **Topic**, and **Random** — across the threat
+models (TM1 ordered, TM2 unordered top-k, TM3 response-only). The headline attack is
+**TellTail-OPT**, and the quickest way to see it is the demo below. 🪶
+
+<p align="center">
+  <img src="assets/overview_repo.png" alt="TellTail-OPT overview" width="760"/>
+</p>
+<p align="center"><sub><b>TellTail-OPT.</b> Optimize a query suffix (with token-blocking) so the
+suffixed query steers the victim retriever toward a chosen <b>target passage</b>
+(<i>passage-level</i>, TM1/TM2) or a <b>topic centroid</b> built from synthetic passages
+(<i>topic-level</i>, TM3) — the retrieved set then fingerprints the retriever.</sub></p>
 
 ## 🪶 Quick demo
 
