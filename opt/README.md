@@ -16,8 +16,8 @@ phase1_attacks.csv                          # + trigger_suffix per row
         │        --eval-models <aliases>
 <long.csv>                                  # rank of each target in each eval model's FULL index
         │
-        ▼  python -m opt.score --long <long.csv> --out <dir>
-setup2_oscr_curves.csv + setup2_asr_by_budget_summary.csv   # TM2 open-set metrics
+        ▼  python -m opt.score --tm {1,2} --long <long.csv> --out <dir>
+{tm1,tm2}_telltail_opt_oscr_curve.csv + _qb_k.csv           # open-set metrics (TM1/TM2)
 ```
 
 - **`optimize.py`** — one optimizer, a pluggable **target**: `PassageTarget` (TM1/TM2,
@@ -27,18 +27,22 @@ setup2_oscr_curves.csv + setup2_asr_by_budget_summary.csv   # TM2 open-set metri
 - **`evaluate.py`** — embeds `eval-prefix + query + trigger` with each eval model and
   records the target's rank in that model's **full** frozen FAISS index (`k=ntotal`,
   `nprobe=8192`). No `tropt` dependency.
-- **`score.py`** — TM2 (unordered top-k) open-set scorer: per-k hit matrix → OSCR curves
-  (CCR vs FAR) and ASR-by-budget. Reproduces the paper's TM2 numbers exactly.
+- **`score.py`** — open-set scorer for both threat models via `--tm`: per-k hit matrix →
+  OSCR curves (CCR vs FAR) and ASR-by-budget. The *only* difference between TMs is the hit
+  rule — `--tm 2`: `hit = rank <= k`; `--tm 1`: `hit = rank <= min(3,k)` (ordered: only the
+  top-3 exposed positions count, so k>=3 collapse to appeared@3). Emits the exact golden
+  schemas (`tm1`=43-col/`setup1`, `tm2`=40-col/`setup2`) and reproduces both paper goldens
+  bit-exactly (every column, Δ=0).
 - **`config.py`** — attack hyper-parameters and per-model token-blocking budgets
   (gemma 90%, openai-3-small 25%, everything else 50%).
 
 ## Threat-model status
 
 - **TM2-OPT (unordered top-k): implemented & validated.** `evaluate.py` reproduces the
-  golden ranks (hit/miss identical at every k; diagonal exact) and `score.py` reproduces
-  the golden OSCR + ASR-by-budget.
-- **TM1-OPT (ordered / full-rank): PENDING.** Its scorer (the "appeared-at" budget rule)
-  and TM1 golden are not yet ported; TM1 reproduction is not yet verified.
+  golden ranks (hit/miss identical at every k; diagonal exact) and `score.py --tm 2`
+  reproduces the golden OSCR + ASR-by-budget (every column, Δ=0).
+- **TM1-OPT (ordered): implemented & validated.** `score.py --tm 1` (hit = rank ≤ min(3,k),
+  the "appeared-at" rule) reproduces the golden OSCR + qb_k bit-exactly.
 - **OpenAI black-box (RASLITE+) optimize path: PENDING.** `optimize.py` currently flags
   `openai-3-small` as `[pending]`; the white-box path covers the 18 HF models.
 
