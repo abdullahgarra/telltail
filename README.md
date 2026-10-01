@@ -7,10 +7,8 @@
 <p align="center"><b>🪶 Fingerprinting retrievers in black-box systems</b></p>
 
 TellTail identifies the embedding retriever behind a black-box RAG system by probing it
-with crafted queries and reading which passages come back. Three query variants —
-**OPT** (model-specific optimized triggers), **Topic**, and **Random** — across the threat
-models (TM1 ordered, TM2 unordered top-k, TM3 response-only). The headline attack is
-**TellTail-OPT**, and the quickest way to see it is the demo below. 🪶
+with crafted queries and reading what comes back. The headline attack is **TellTail-OPT**
+(model-specific optimized triggers); the quickest way to see it is the demo below. 🪶
 
 <p align="center">
   <img src="assets/telltail_opt_overview.png" alt="TellTail-OPT overview" width="760"/>
@@ -20,13 +18,31 @@ suffixed query steers the victim retriever toward a chosen <b>target passage</b>
 (<i>passage-level</i>, TM1/TM2) or a <b>topic centroid</b> built from synthetic passages
 (<i>topic-level</i>, TM3) — the retrieved set then fingerprints the retriever.</sub></p>
 
+| Threat model | What the attacker observes | Attack |
+|---|---|---|
+| **TM1** (ordered) | the ranked top-k passages | passage-level |
+| **TM2** (unordered) | the top-k passage set | passage-level |
+| **TM3** (response-only) | only the generated RAG answer | topic-level |
+
 ## 🪶 Quick demo
 
-Three runnable things, **no 8.8M-passage index required** and **no `.env` needed** (outputs
-default to `outputs/demo/`). The repo ships a small corpus of **~5.6k MS MARCO passages**
-(`demo/data/`) — used to run all the optimized queries against the four victim models — and
-builds a small index per victim on the fly (cached after the first run). Paper-scale
-reproduction is in [Full reproduction](#full-reproduction).
+Three runnable things, **no 8.8M-passage index required** and **no `.env` or API keys needed**
+(outputs default to `outputs/demo/`). The repo ships a small corpus of **~5.6k MS MARCO
+passages** (`demo/data/`) — used to run all the optimized queries against the four victim
+models — and builds a small index per victim on the fly (cached after the first run).
+
+From a fresh clone (Python 3.12):
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt && pip install -e .
+python -m demo fingerprint                 # CPU · no .env · no keys
+```
+
+The first run downloads the four victim models (public, no HF token) and builds their small
+indices (~1–3 min); later runs take seconds. `fingerprint` and `topic` need no keys;
+`optimize` additionally needs a GPU and the bundled `tropt`. Paper-scale reproduction is in
+[Full reproduction](#full-reproduction).
 
 ### 1. Fingerprint the victims &nbsp;·&nbsp; `python -m demo fingerprint` (CPU)
 
@@ -89,14 +105,14 @@ CPU — the multilingual encoder dominates), cached and shared afterwards → se
 
 ## Setup
 
-Reference environment: **Python 3.12** (results produced with the pinned versions in
-`requirements.txt` — torch 2.9.1 / CUDA 12.8, faiss-cpu, numpy 2.x).
+The demo needs only the install above. The **full pipeline** additionally needs `.env`
+(paths to the corpus / indices / outputs). Reference environment: **Python 3.12**, pinned
+versions in `requirements.txt` (torch 2.9.1 / CUDA 12.8, faiss-cpu, numpy 2.x).
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Python 3.12
-pip install -r requirements.txt                     # pinned reference versions
-pip install -e .                                    # the telltail package
-cp .env.example .env                                # then fill in the paths (below)
+pip install -r requirements.txt && pip install -e .
+cp .env.example .env                                # full pipeline only — fill in paths (below)
 ```
 
 A single `pip install -r requirements.txt` sets up everything, including the OPT optimizer
@@ -187,7 +203,7 @@ enumerate-when-≤-repeats on; TM1 `top_ks 1,2,3,5,10,20,50` `n_repeats 100`; TM
 
 ## Layout
 
-- `demo/` — the reviewer demo (`fingerprint`, `optimize`) + shipped `data/` (5k corpus, ready queries).
+- `demo/` — the reviewer demo (`fingerprint`, `topic`, `optimize`) + shipped `data/` (~5.6k corpus, ready queries).
 - `opt/` — TellTail-OPT (optimize → evaluate → score), `tropt`-backed.
 - `generic_queries/` — Topic/Random pipeline (retrieve/fetch/score/evaluate/sweep) + `_common.py`.
 - `telltail/` — core library (model registry, env paths, embedding).

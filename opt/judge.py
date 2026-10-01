@@ -1,22 +1,12 @@
-"""TellTail-OPT / TM3 — Stage 4: LLM judge over the RAG responses.
+"""TellTail-OPT Stage 4 (TM3): LLM judge over the RAG responses.
 
-Reads the per-eval-model response JSONLs from `opt.llm` (e.g. `results/opt/tm3_responses/`
-or a fresh run's output) and asks a judge LLM whether each generated response says the
-retrieved **context is exclusively on the hidden topic (Harry Potter)** — the signal a
-response-only attacker reads off the answer. Writes a verdict per record.
+Asks a judge LLM (DeepSeek-V4-Flash via DeepInfra, key from DEEPINFRA_API_KEY) whether each
+response says the retrieved context is exclusively on the hidden topic (Harry Potter).
+Writes `judgements.jsonl` (slim verdicts) + `all_judged.jsonl`; `plots/judge_heatmap.py`
+plots them. Resume-safe.
 
-Judge model: DeepSeek-V4-Flash via DeepInfra's OpenAI-compatible endpoint (ported from the
-research judge). The key is read from the environment (`DEEPINFRA_API_KEY`); no key in the
-repo. `--model` / `--base-url` are configurable.
-
-Outputs (under `--out`): `judgements.jsonl` (slim: the join key + verdict + reason — the
-form shipped under `results/opt/tm3_judgments/`), `all_judged.jsonl` (full records), and
-`per_eval_model/<eval_model>.judged.jsonl`. Resume-safe. `plots/judge_heatmap.py` turns the
-verdicts into the candidate x eval heatmap.
-
-Usage:
     DEEPINFRA_API_KEY=... python -m opt.judge --responses results/opt/tm3_responses \
-        --out $TELLTAIL_OUT_DIR/tm3_judge
+        --out outputs/tm3_judge
 """
 from __future__ import annotations
 

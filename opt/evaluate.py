@@ -1,19 +1,10 @@
-"""TellTail-OPT — Stage 2 evaluator (TM1/TM2: rank of the target passage).
+"""TellTail-OPT Stage 2 (TM1/TM2): rank of each target passage in the victim's full index.
 
-Ports the research `2_evaluate/evaluate_single_chunk.py`. For each eval model and each
-attacked row, builds the eval query (the eval model's own prefix + the attacked
-query+suffix), embeds it, searches the model's FULL frozen index (k=ntotal, nprobe=8192),
-and records the rank of the target passage id.
+For each attacked row x eval model, embeds the eval query and records the target's rank in
+that model's full frozen index (k=ntotal, nprobe=8192).
 
-Eval-string rule (byte-faithful to the research eval):
-  * OpenAI eval model:  f"{query_text} {trigger_suffix}"                 (no prefix)
-  * OSS eval model:     f"{prefix} {query_text} {trigger_suffix}"        if prefix and
-                        not prefix.endswith(' '); else f"{prefix}{query_text} {trigger_suffix}"
-Prefixes come from `configs/models.yaml` (== the research 2_evaluate config).
-
-Usage:
     python -m opt.evaluate --attacks <phase1_attacks.csv> --out <long.csv> \
-        --eval-models minilm-l6,e5-large [--attack-models ...]
+        --eval-models minilm-l6,e5-large
 """
 from __future__ import annotations
 

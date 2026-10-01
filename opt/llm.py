@@ -1,18 +1,9 @@
-"""TellTail-OPT — Stage 3 for the topic-level / response-only attack: RAG LLM responses.
+"""TellTail-OPT Stage 3 (topic / response-only): generate RAG answers from the top-k.
 
-Reads the retrieved passages from stage 2 (`opt.retrieve`), takes the top-K per
-(attack_model, query_group, eval_model), drops them into the Open WebUI RAG template, and
-calls the generator LLM (gpt-4o-mini, temperature 0.8). Responses are saved as one JSONL
-per eval model — this is the attacker's observable in the response-only threat model.
+Fills the Open WebUI RAG template with the top-k retrieved passages per (attack, group,
+eval) and calls gpt-4o-mini (temp 0.8). Writes one JSONL per eval model — the attacker's
+observable. OpenAI key from `.env`. Judging is stage 4 (`opt.judge`).
 
-No model loading, no FAISS, no GPU: only the OpenAI API. The key is read from the repo
-`.env` (`OPENAI_API_KEY`), loaded by `telltail.paths`.
-
-What the research code did and we deliberately dropped: the commented-out INSPECTION_PROMPT
-("tell me the topic / 'All context is Harry Potter related'") and all keyword matching —
-the user runs their own judge over these responses, separately.
-
-Usage:
     python -m opt.llm --retrieved <retrieved.csv> --attacks <phase1_attacks.csv> \
         --out <responses_dir> [--topk 3]
 """
