@@ -74,8 +74,12 @@ pip install -e .                                    # the telltail package
 cp .env.example .env                                # then fill in the paths (below)
 ```
 
-The generic pipeline and `demo fingerprint` use only standard PyPI packages. Only the OPT
-optimizer (`demo optimize` / `opt/optimize.py`) needs the private **`tropt`** library.
+A single `pip install -r requirements.txt` sets up everything, including the OPT optimizer
+**TROPT**, which we **vendor** (an early version, with the authors' permission) under
+`third_party/tropt/` — the `-e ./third_party/tropt` line in `requirements.txt` installs it.
+The generic pipeline and `demo fingerprint` don't import it; it's bundled only so there's one
+install command. Use the vendored copy — do **not** `pip install` TROPT from upstream (its
+current API differs). See `third_party/tropt/NOTICE.md` for attribution and the citation.
 
 `.env` variables (all paths resolved only through these — no hardcoded paths):
 
@@ -103,7 +107,9 @@ opt/inputs/queries.csv  --optimize-->  phase1 (+ trigger)  --evaluate-->  ranks 
 - **`score.py`** — `--tm {1,2}` open-set scorer (OSCR + ASR-by-budget). Reproduces the paper
   goldens (`results/paper/tm{1,2}_telltail_opt_*.csv`) bit-exactly.
 
-See `opt/README.md` for the full flow and the threat-model status.
+See `opt/README.md` for the full flow and the threat-model status. The optimizer is
+powered by **TROPT** ([Ben-Tov & Sharif, 2026](https://arxiv.org/abs/2606.23496);
+[github.com/matanbt/TROPT](https://github.com/matanbt/TROPT)), vendored in `third_party/`.
 
 ## Full reproduction
 
