@@ -58,8 +58,9 @@ class PassageTarget:
 
 @dataclass
 class VectorTarget:
-    """TM3 target: a centroid vector. Token blocking must use a different source than a
-    passage (it "changes a tad") — wired when TM3 lands; not used by this file yet."""
+    """Topic-level target: a centroid vector (mean of a topic's passage embeddings). Used
+    by `run_topic`; blocking uses a separate source (the longest passages), not a single
+    passage, so `blocking_source_text` is None here."""
     vector: "np.ndarray"
     vector_id: str = ""
 
@@ -303,14 +304,189 @@ def run(queries_csv: Path, out_dir: Path, only_models=None) -> None:
     print(f"\n[done] {out_path}")
 
 
+# --------------------------------------------------------------------------- #
+# Topic-level attack (response-only evaluation): centroid target + 3-stage blocking
+# --------------------------------------------------------------------------- #
+# Same optimizer, same semantic blocking, same prefixes as the passage-level attack
+# above — only the target (a topic centroid instead of one passage) and a third
+# (basic-BPE lexical) blocking stage differ.
+def _load_block_words(path):
+    """One word per line; blank lines and `#` comments stripped (research-faithful)."""
+    words = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            words.append(line)
+    return words
+
+
+def forbidden_tokens_3stage(blocking_text, tokenizer, hf_encoder, percent, block_words, device):
+    """Three-stage global weighted blocking (`get_forbidden_tokens_exp3`, basic-BPE):
+      (1) passage tokens of `blocking_text`  (2) semantic fill to `percent`% of vocab
+      (shared with the passage-level attack)  (3) basic-BPE lexical over `block_words`,
+      forbidden ON TOP of the semantic budget. Returns (ids, n_semantic, n_lexical)."""
+    forbidden, n_sem = forbidden_tokens_semantic(
+        blocking_text, tokenizer, hf_encoder, percent, device)
+    forbidden_set = set(forbidden)
+    n_lex = 0
+    if block_words:
+        basic_ids = set()
+        for word in block_words:
+            for variant in {word, word.lower(), word.upper(), word.capitalize()}:
+                basic_ids.update(tokenizer.encode(variant, add_special_tokens=False))
+        n_lex = len(basic_ids - forbidden_set)
+        forbidden_set.update(basic_ids)
+    return list(forbidden_set), n_sem, n_lex
+
+
+def _centroid_vector(tropt_model, passages):
+    """Centroid = mean of the attacked model's embeddings of the (bare) group passages.
+    Reproduces `run_centroid_attack`: no passage prefix (the document_prefix bug)."""
+    import torch
+    with torch.no_grad():
+        embs = tropt_model(passages)
+        if embs.dim() == 1:
+            embs = embs.unsqueeze(0)
+        return embs.mean(dim=0, keepdim=True)
+
+
+def _load_topic_input(queries_csv: Path):
+    """Return (query_id, query_text, [passage_text...]) from the single-query input."""
+    rows = list(csv.DictReader(open(queries_csv, encoding="utf-8")))
+    if not rows:
+        raise ValueError(f"empty input: {queries_csv}")
+    qids = {r["query_id"] for r in rows}
+    if len(qids) != 1:
+        raise ValueError(f"topic input expects ONE query_id; got {sorted(qids)}")
+    return rows[0]["query_id"], rows[0]["query_text"], [r["passage_text"] for r in rows]
+
+
+def _split_groups(passages):
+    need = C.NUM_TOPIC_GROUPS * C.PASSAGES_PER_GROUP
+    if len(passages) < need:
+        raise ValueError(f"need >= {need} passages for {C.NUM_TOPIC_GROUPS} groups of "
+                         f"{C.PASSAGES_PER_GROUP}; got {len(passages)}")
+    return [passages[i * C.PASSAGES_PER_GROUP:(i + 1) * C.PASSAGES_PER_GROUP]
+            for i in range(C.NUM_TOPIC_GROUPS)]
+
+
+def _blocking_text(passages):
+    """The TOP_N longest passages (of ALL passages), longest first, joined."""
+    lengths = [len(t) for t in passages]
+    top_idx = np.argsort(lengths)[-C.TOP_N_BLOCKING_PASSAGES:][::-1]
+    return C.BLOCKING_JOINER.join(passages[i] for i in top_idx)
+
+
+# Schema identical to the research topic-attack phase1_attacks.csv.
+TOPIC_PHASE1_COLUMNS = ["query_id", "query_text", "query_group", "attack_model",
+                        "trigger_suffix", "full_triggered_query",
+                        "num_tokens_blocked_semantic", "num_tokens_blocked_lexical", "error"]
+
+
+def run_topic(queries_csv: Path, out_dir: Path, only_models=None, attack_models=None) -> None:
+    import random
+    import torch
+    from telltail.models import load_registry
+
+    random.seed(C.SEED)
+    torch.manual_seed(C.SEED)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    reg = load_registry()
+
+    query_id, query_text, passages = _load_topic_input(queries_csv)
+    groups = _split_groups(passages)
+    blocking_text = _blocking_text(passages)
+    block_words = _load_block_words(C.BLOCK_WORDS_PATH)
+    print(f"[+] query_id={query_id} | {len(passages)} passages | {len(groups)} groups "
+          f"| blocking_text={len(blocking_text)} chars | {len(block_words)} block words")
+
+    models = attack_models or sorted(a for a, e in reg.items() if e.get("candidate"))
+    if only_models:
+        models = [m for m in models if m in set(only_models)]
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "phase1_attacks.csv"
+    with open(out_path, "w", newline="", encoding="utf-8") as fh:
+        csv.DictWriter(fh, fieldnames=TOPIC_PHASE1_COLUMNS).writeheader()
+
+    from tropt.models.huggingface.encoder import EncoderHFModel
+
+    for alias in models:
+        if alias not in reg:
+            print(f"[skip] {alias}: not in registry"); continue
+        if reg[alias].get("backend") == "openai":
+            print(f"[pending] {alias}: OpenAI black-box path not ported yet — skipping.")
+            continue
+
+        hf_id = reg[alias]["hf_id"]
+        query_prefix = reg[alias].get("query_prefix", "")
+        percent = C.blocking_percent(alias)
+        print(f"\n=== {alias} ({hf_id}) | blocking={percent}% ===")
+        try:
+            tropt_model = EncoderHFModel(model_name=hf_id)
+            tokenizer, hf_encoder = _extract_encoder_and_tokenizer(tropt_model)
+            hf_encoder.eval(); hf_encoder.to(device)
+        except Exception as e:
+            print(f"[fail-load] {alias}: {e}"); _clear(); continue
+
+        # Forbidden tokens computed ONCE per model (from the N longest passages).
+        try:
+            forbidden, n_sem, n_lex = forbidden_tokens_3stage(
+                blocking_text, tokenizer, hf_encoder, percent, block_words, device)
+            print(f"  blocking: semantic={n_sem} lexical={n_lex} total={len(forbidden)}")
+        except Exception as e:
+            import traceback; traceback.print_exc()
+            print(f"[fail-block] {alias}: {e}")
+            del tropt_model, tokenizer, hf_encoder; _clear(); continue
+
+        out_records = []
+        for gi, group in enumerate(groups):
+            rec = dict(query_id=query_id, query_text=query_text, query_group=gi,
+                       attack_model=alias, trigger_suffix=None, full_triggered_query=None,
+                       num_tokens_blocked_semantic=n_sem, num_tokens_blocked_lexical=n_lex,
+                       error=None)
+            try:
+                centroid = _centroid_vector(tropt_model, group)
+                target = VectorTarget(vector=centroid, vector_id=f"{alias}:g{gi}")
+                suffix = optimize_one(model=tropt_model, query_text=query_text,
+                                      query_prefix=query_prefix, target=target,
+                                      forbidden_token_ids=forbidden, device=device)
+                rec.update(trigger_suffix=suffix,
+                           full_triggered_query=f"{query_prefix}{query_text} {suffix}")
+                print(f"  [g{gi}/{len(groups)-1}] ok  trig[:60]={suffix[:60]!r}")
+            except Exception as e:
+                import traceback; traceback.print_exc()
+                rec["error"] = str(e)
+                print(f"  [g{gi}/{len(groups)-1}] ERROR: {e}")
+            out_records.append(rec)
+
+        with open(out_path, "a", newline="", encoding="utf-8") as fh:
+            csv.DictWriter(fh, fieldnames=TOPIC_PHASE1_COLUMNS).writerows(out_records)
+        print(f"[saved] {alias}: {len(out_records)} rows -> {out_path}")
+        del tropt_model, tokenizer, hf_encoder
+        _clear()
+
+    print(f"\n[done] {out_path}")
+
+
 def main():
     ap = argparse.ArgumentParser(description="TellTail-OPT Stage-1 optimizer")
-    ap.add_argument("--queries", type=Path, default=Path("opt/inputs/queries.csv"))
+    ap.add_argument("--mode", choices=["passage", "topic"], default="passage",
+                    help="passage = TM1/TM2 (one victim passage); "
+                         "topic = topic-level centroid attack (response-only eval)")
+    ap.add_argument("--queries", type=Path, default=None,
+                    help="input CSV (default: opt/inputs/queries.csv for passage, "
+                         "opt/inputs/query_passages.csv for topic)")
     ap.add_argument("--out", type=Path, required=True, help="output dir for phase1_attacks.csv")
     ap.add_argument("--models", default="", help="optional comma-separated subset of attack aliases")
     args = ap.parse_args()
     only = [m.strip() for m in args.models.split(",") if m.strip()] or None
-    run(args.queries, args.out, only_models=only)
+    if args.mode == "topic":
+        queries = args.queries or Path("opt/inputs/query_passages.csv")
+        run_topic(queries, args.out, only_models=only)
+    else:
+        queries = args.queries or Path("opt/inputs/queries.csv")
+        run(queries, args.out, only_models=only)
 
 
 if __name__ == "__main__":

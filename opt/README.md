@@ -20,10 +20,11 @@ phase1_attacks.csv                          # + trigger_suffix per row
 {tm1,tm2}_telltail_opt_oscr_curve.csv + _qb_k.csv           # open-set metrics (TM1/TM2)
 ```
 
-- **`optimize.py`** — one optimizer, a pluggable **target**: `PassageTarget` (TM1/TM2,
-  suffix aimed at a victim passage) and `VectorTarget` (TM3, suffix aimed at a centroid
-  vector). Semantic "global weighted blocking" forbids the top-k% of each model's vocab.
-  Prefixes come from `configs/models.yaml`. Requires the private `tropt` optimizer library.
+- **`optimize.py`** — one optimizer, a pluggable **target**, selected by `--mode`:
+  `--mode passage` (default; TM1/TM2) aims the suffix at one victim passage;
+  `--mode topic` aims it at the **centroid** of a group of passages (the topic-level
+  attack, below). Semantic "global weighted blocking" forbids the top-k% of each model's
+  vocab. Prefixes come from `configs/models.yaml`. Requires the private `tropt` library.
 - **`evaluate.py`** — embeds `eval-prefix + query + trigger` with each eval model and
   records the target's rank in that model's **full** frozen FAISS index (`k=ntotal`,
   `nprobe=8192`). No `tropt` dependency.
@@ -34,7 +35,54 @@ phase1_attacks.csv                          # + trigger_suffix per row
   schemas (`tm1`=43-col/`setup1`, `tm2`=40-col/`setup2`) and reproduces both paper goldens
   bit-exactly (every column, Δ=0).
 - **`config.py`** — attack hyper-parameters and per-model token-blocking budgets
-  (gemma 90%, openai-3-small 25%, everything else 50%).
+  (gemma 90%, openai-3-small 25%, everything else 50%), plus the topic-attack / RAG knobs.
+
+## Topic-level attack (response-only — threat model 3)
+
+Here the attacker observes only the **LLM's answer**, not the ranking. The trigger is
+optimized toward the **centroid of a topic's passages**; at eval time the triggered query
+retrieves passages, those are fed to a RAG LLM, and the generated response is saved.
+
+```
+opt/inputs/query_passages.csv               # one benign query + 100 topic passages
+        │
+        ▼  python -m opt.optimize --mode topic --out <dir>
+<dir>/phase1_attacks.csv                     # 10 triggers/model (10 passage-groups → centroids)
+        │
+        ▼  python -m opt.retrieve --attacks <dir>/phase1_attacks.csv --out <dir>/retrieved.csv \
+        │        --eval-models <aliases> [--k 3]
+<dir>/retrieved.csv                          # top-k passages per (attack, group, eval model)
+        │
+        ▼  python -m opt.llm --retrieved <dir>/retrieved.csv --attacks <dir>/phase1_attacks.csv \
+        │        --out <dir>/responses
+<dir>/responses/<eval_model>.jsonl           # gpt-4o-mini responses (fed to your own judge)
+```
+
+- **optimize `--mode topic`** adds a third blocking stage (basic-BPE lexical over
+  `opt/inputs/hp_block_words.txt`) on top of the shared passage-token + semantic stages.
+- **`retrieve.py`** retrieves the top-k passages (default **k=3**, since full top-100
+  retrieval is slow — pass **`--k 100`** for the paper's set; the LLM uses the top-3 either
+  way) and attaches passage text from the on-disk store (below).
+- **`llm.py`** fills the Open WebUI RAG template, calls **gpt-4o-mini, temperature 0.8**,
+  and writes one JSONL per eval model. Judging is **out of scope** — run your own judge over
+  these responses.
+
+### Passage store (required for the topic attack + demo, NOT for TM1/TM2)
+
+Retrieval needs `passage_id → text`. TM1/TM2 score **ranks**, not text, so they don't need
+it; only the topic attack and the demo do. Build it once onto your own disk (CPU + disk
+only, ~3 GB, nothing committed):
+
+```
+python -m tools.build_passage_store --out $TELLTAIL_DATA_DIR/passages.sqlite
+# smoke test on a sample + verify ids line up with an index:
+python -m tools.build_passage_store --out /tmp/passages_sample.sqlite --sample 2000 \
+    --smoke --check-index minilm-l6
+```
+
+It iterates the corpus through the **same loader** as `indexing/build_faiss.py`
+(`telltail.corpus`), so store ids and index docids share one id space. If it's missing,
+`opt.retrieve` fails with the exact build command above.
 
 ## Threat-model status
 
@@ -43,8 +91,13 @@ phase1_attacks.csv                          # + trigger_suffix per row
   reproduces the golden OSCR + ASR-by-budget (every column, Δ=0).
 - **TM1-OPT (ordered): implemented & validated.** `score.py --tm 1` (hit = rank ≤ min(3,k),
   the "appeared-at" rule) reproduces the golden OSCR + qb_k bit-exactly.
+- **Topic-level attack (response-only / TM3): implemented.** `optimize --mode topic` →
+  `retrieve` → `llm`, reproducing the research flow (centroid target, 3-stage blocking,
+  gpt-4o-mini RAG). Keyword matching and the mincut blocking path are deliberately dropped;
+  judging is left to the user. Golden: `phase1_attacks.csv` + the per-eval-model response
+  JSONLs.
 - **OpenAI black-box (RASLITE+) optimize path: PENDING.** `optimize.py` currently flags
-  `openai-3-small` as `[pending]`; the white-box path covers the 18 HF models.
+  `openai-3-small` as `[pending]` (both modes); the white-box path covers the 18 HF models.
 
 ## Keys
 

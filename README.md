@@ -22,9 +22,10 @@ suffixed query steers the victim retriever toward a chosen <b>target passage</b>
 
 ## 🪶 Quick demo
 
-Two runnable things, **no 8.8M-passage index required**. The demo ships a 5,000-passage
-MS MARCO subset (`demo/data/`) and builds a small index per victim on the fly (cached after
-the first run). Paper-scale reproduction is in [Full reproduction](#full-reproduction).
+Three runnable things, **no 8.8M-passage index required**. The demo ships a small corpus
+sampled from MS MARCO (`demo/data/`), suitable for both the passage-level and topic-level
+attacks, and builds a small index per victim on the fly (cached after the first run).
+Paper-scale reproduction is in [Full reproduction](#full-reproduction).
 
 ### 1. Fingerprint the victims &nbsp;·&nbsp; `python -m demo fingerprint` (CPU)
 
@@ -43,7 +44,26 @@ Three victims are in the candidate set and are identified; `multilingual-e5-smal
 the fingerprint isn't fooled by a closely related model it has never registered. The command
 also writes a top-3-rate heatmap (`S[candidate, victim]`, predicted cell outlined).
 
-### 2. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
+### 2. Topic-level / response-only attack &nbsp;·&nbsp; `python -m demo topic` (CPU)
+
+The response-only analogue of `fingerprint`. Each candidate ships optimized **topic**
+triggers (crafted toward a topic's centroid via `opt.optimize --mode topic`). The command
+runs them against each victim and checks whether the victim's **top-3 retrieved passages are
+all on-topic** — the signal a response-only attacker reads off the generated answer — then
+names each victim:
+
+```
+victim                  prediction
+minilm-l6               minilm-l6
+minilm-l12              minilm-l12
+e5-small                e5-small
+multilingual-e5-small   UNK
+```
+
+Same victim set as `fingerprint`: the three registered candidates are identified and the
+unseen `multilingual-e5-small` returns **UNK**. Also writes a candidate×victim heatmap.
+
+### 3. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
 
 Craft a fresh trigger for `minilm-l6` and watch it fingerprint only that model:
 
@@ -58,9 +78,10 @@ multilingual-e5-small             2740               3849
 100 GASLITE steps with 50% semantic token-blocking: the new suffix drives the target to
 **rank 1 on minilm-l6** and far down on the others. `--query-id N` picks a different query.
 
-**Runtime.** `fingerprint`: the first run builds four small indices (~1–3 min on CPU — the
-multilingual encoder dominates), cached afterwards → seconds. `optimize`: ~8 min on one GPU.
-`optimize` needs the `tropt` optimizer library; `fingerprint` does not.
+**Runtime.** `fingerprint` / `topic`: the first run builds four small indices (~1–3 min on
+CPU — the multilingual encoder dominates), cached and shared afterwards → seconds.
+`optimize`: ~8 min on one GPU. `optimize` needs the `tropt` optimizer library;
+`fingerprint` and `topic` do not.
 
 ## Setup
 

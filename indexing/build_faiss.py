@@ -140,11 +140,11 @@ def main() -> None:
         print("[done] nothing to build with the synchronous builder.")
         return
 
-    from datasets import load_dataset
+    # Shared corpus loader (telltail.corpus) — the SAME iteration the passage store uses,
+    # so index docids and store passage ids share one id space and cannot drift.
+    from telltail.corpus import load_corpus_arrays
     print("[corpus] loading BeIR/msmarco (full corpus)...")
-    corpus = load_dataset("BeIR/msmarco", "corpus", split="corpus")
-    corpus_texts = [ex["text"] for ex in corpus]
-    docids = np.array([str(ex["_id"]) for ex in corpus], dtype=object)
+    corpus_texts, docids = load_corpus_arrays()
     print(f"[corpus] {len(corpus_texts):,} passages")
 
     for alias in aliases:
