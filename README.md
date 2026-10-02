@@ -42,7 +42,7 @@ The first run downloads the four victim models (public, no HF token) and builds 
 indices; later runs should be faster.
 Running `optimize` needs a GPU. 
 For paper-scale reproduction:
-[Full reproduction](#full-reproduction).
+[Full reproduction](#-full-reproduction).
 
 ### 1. Fingerprint victims in TM2
 
@@ -163,7 +163,7 @@ API differs); see `third_party/tropt/`.
 
 The optimizer is powered by **TROPT**, vendored under `third_party/` (see `third_party/tropt/`).
 
-## Full reproduction
+## 🧪 Full reproduction
 
 At paper scale, TellTail fingerprints the deployed retriever across the full 53-model
 zoo — the diagonal (correct self-identification) dominates:
