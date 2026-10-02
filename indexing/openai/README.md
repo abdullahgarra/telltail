@@ -7,15 +7,15 @@ three steps. The final `.index`/`_docids.npy`/`_spec.json` land in
 
 ```bash
 # 1. write Batch-API request files (streams the corpus; no API key needed)
-python indexing/openai/1_make_batches.py --out-dir _local/openai_batches
+python indexing/openai/1_make_batches.py --out-dir outputs/openai_batches
 
 # 2. submit to the Batch API, poll, download embedding shards (KEY FROM ENV)
 OPENAI_API_KEY=... python indexing/openai/2_run_batches.py \
-    --batch-dir _local/openai_batches --out-dir _local/openai_run
+    --batch-dir outputs/openai_batches --out-dir outputs/openai_run
 
 # 3. assemble the IVF+SQ8 index from the shards -> $TELLTAIL_INDEX_DIR
 python indexing/openai/3_build_from_shards.py \
-    --shard-dir _local/openai_run/emb_shards --out-dir $TELLTAIL_INDEX_DIR
+    --shard-dir outputs/openai_run/emb_shards --out-dir $TELLTAIL_INDEX_DIR
 ```
 
 Notes:

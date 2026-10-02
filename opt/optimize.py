@@ -1,24 +1,10 @@
-"""TellTail-OPT — Stage 1 optimizer (trigger-suffix generation).
+"""TellTail-OPT Stage 1: craft per-model trigger suffixes toward a target.
 
-Ports the research "Experiment 3: global weighted blocking" white-box attack into the
-release repo, with one shared optimizer and a pluggable **target**:
+`--mode passage` (TM1/TM2) targets a victim passage; `--mode topic` (TM3) targets a topic
+centroid. One optimizer, a pluggable `Target` (see `PassageTarget` / `VectorTarget`).
 
-  * TM1 / TM2  -> PassageTarget: suffix optimized so (query_prefix+query+suffix) embeds
-    near a specific victim passage. Forbidden-token blocking is computed from that
-    passage's word embeddings.
-  * TM3        -> VectorTarget: suffix optimized toward a given centroid vector (no
-    passage). The API is identical; only the target and the blocking source differ.
-
-The tropt API (`craft_fingerprint_query`) already accepts either `target_text` or
-`target_vector`, so the split lives entirely in the `Target` object below.
-
-Prefixes come from `configs/models.yaml` (via `telltail.models`). Fidelity note: the
-research `run_attack` read a `document_prefix` key that its config never defined, so the
-optimization target was the **bare passage** (no passage prefix). We replicate that here
-to reproduce the paper; see `PassageTarget`.
-
-Usage:
-    python -m opt.optimize --queries opt/inputs/queries.csv --out opt/_local/phase1
+    python -m opt.optimize --queries opt/inputs/queries.csv --out outputs/phase1
+    python -m opt.optimize --mode topic --out outputs/topic_phase1
 """
 from __future__ import annotations
 

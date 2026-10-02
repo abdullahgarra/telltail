@@ -1,11 +1,10 @@
-"""TellTail reviewer demo — two runnable things:
+"""TellTail reviewer demo.
 
     python -m demo fingerprint              # fingerprint the victim retrievers (CPU)
-    python -m demo topic                    # topic-level / response-only attack demo (CPU)
-    python -m demo optimize [--query-id N]  # optimize a NEW query for minilm-l6 (GPU)
+    python -m demo topic                    # topic-level / response-only attack (CPU)
+    python -m demo optimize [--query-id N]  # optimize a new query for minilm-l6 (GPU)
 """
 import argparse
-import sys
 
 
 def main():
@@ -30,11 +29,7 @@ def main():
     elif args.cmd == "topic":
         topic.main(args)
     elif args.cmd == "optimize":
-        try:
-            from . import optimize as demo_optimize
-        except ImportError:
-            print("`demo optimize` is not available yet (TASK 4).", file=sys.stderr)
-            sys.exit(2)
+        from . import optimize as demo_optimize
         demo_optimize.main(args)
 
 

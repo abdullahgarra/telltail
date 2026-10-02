@@ -14,7 +14,7 @@ from .fingerprint import DATA, DEMO_VICTIMS
 from .index import load_corpus, build_index
 
 ATTACK = "minilm-l6"
-DEFAULT_QID = 13   # minilm-l6 self-rank 1; all other victims 286+ away (cleanest separation)
+DEFAULT_QID = 13
 
 
 def main(args):

@@ -98,12 +98,30 @@ def apply_prefix(alias: str, texts: List[str], kind: str) -> List[str]:
 # ---------------------------------------------------------------------------
 # Encoders / embedding
 # ---------------------------------------------------------------------------
+def _gpu_usable() -> bool:
+    """True only if a CUDA device is present AND this torch build has a kernel for it.
+
+    ``torch.cuda.is_available()`` can report True on a GPU whose compute capability
+    the installed torch has no kernels for (e.g. an older card); the failure then
+    surfaces only later, at the first op. Probe with a tiny op so ``device=None``
+    (auto) falls back to CPU instead of crashing mid-encode.
+    """
+    if torch is None or not torch.cuda.is_available():
+        return False
+    try:
+        # A plain .cuda() copy can succeed on an unsupported card; force a real
+        # compute kernel + sync so "no kernel image" surfaces here, not mid-encode.
+        x = torch.ones(8, 8, device="cuda")
+        (x @ x).sum().item()
+        return True
+    except Exception:
+        return False
+
+
 def _default_device(device: Optional[str]) -> str:
     if device:
         return device
-    if torch is not None and torch.cuda.is_available():
-        return "cuda"
-    return "cpu"
+    return "cuda" if _gpu_usable() else "cpu"
 
 
 def load_encoder(alias: str, device: Optional[str] = None):

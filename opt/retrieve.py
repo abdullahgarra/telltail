@@ -1,21 +1,9 @@
-"""TellTail-OPT — Stage 2 for the topic-level / response-only attack: retrieve passages.
+"""TellTail-OPT Stage 2 (topic / response-only): retrieve the top-k passages per trigger.
 
-For each optimized trigger (from `opt.optimize --mode topic`) and each eval model, embeds
-the eval query, searches the model's FULL frozen index, and saves the TOP-K retrieved
-passages (id + text). Unlike `opt.evaluate` (which records the rank of a known target),
-there is no target here — the retrieved passages themselves are the output, fed to the
-RAG LLM in stage 3 (`opt.llm`).
+For each trigger (from `opt.optimize --mode topic`) x eval model, searches the model's full
+index and saves the top-k passages (id + text from the SQLite passage store). Fed to the
+RAG LLM in stage 3. Default k=3; pass `--k 100` for the paper's set.
 
-Eval-string rule (byte-faithful to the research `retrieve_topk_docids_with_loaded_model`,
-`add_prefix=True`):
-  * OpenAI eval model:  f"{query_text} {trigger_suffix}"                  (no prefix)
-  * OSS eval model:     f"{query_prefix}{query_text} {trigger_suffix}"    (prefix glued, no
-                        extra space — differs from opt.evaluate's TM1/TM2 rule)
-Passage text comes from the on-disk SQLite store built by `tools/build_passage_store.py`
-(`telltail.passage_store.get_passages`). Default K is small (3) because full top-100
-retrieval is slow; pass `--k 100` for the paper's set. The LLM consumes the top-3 either way.
-
-Usage:
     python -m opt.retrieve --attacks <phase1_attacks.csv> --out <retrieved.csv> \
         --eval-models minilm-l6,e5-large [--k 3] [--passage-store passages.sqlite]
 """
@@ -33,6 +21,8 @@ from . import config as C
 
 def build_topic_eval_query(eval_prefix: str, query_text: str, trigger_suffix: str,
                            is_openai: bool) -> str:
+    # Prefix is glued directly (no extra space) — matches the research retrieve, and
+    # differs from opt.evaluate's TM1/TM2 rule. OpenAI eval models get no prefix.
     if is_openai:
         return f"{query_text} {trigger_suffix}"
     return f"{eval_prefix}{query_text} {trigger_suffix}"
@@ -97,6 +87,7 @@ def run(attacks_csv: Path, out_csv: Path, eval_models: List[str], k: int = C.RET
         model = SentenceTransformer(hf, trust_remote_code=True)
 
         out = []
+        n_pids = n_found = 0
         for i, r in enumerate(rows):
             eval_query = build_topic_eval_query(eval_prefix, r["query_text"], r["trigger_suffix"], is_oai)
             q = model.encode([eval_query], convert_to_numpy=True)[0].reshape(1, -1).astype("float32")
@@ -104,12 +95,17 @@ def run(attacks_csv: Path, out_csv: Path, eval_models: List[str], k: int = C.RET
             _, indices = index.search(q, k)
             pids = [str(docids[int(fid)]) for fid in indices[0] if int(fid) >= 0]
             texts = get_passages(pids, db_path=passage_store_path)
+            n_pids += len(pids); n_found += sum(1 for p in pids if texts.get(p))
             for rank, pid in enumerate(pids, 1):
                 out.append(dict(attack_model=r["attack_model"], query_group=r["query_group"],
                                 eval_model=eval_key, rank=rank, passage_id=pid,
                                 passage_text=texts.get(pid, "")))
             if (i + 1) % 25 == 0:
                 print(f"  [{i+1}/{len(rows)}] triggers retrieved")
+        if n_pids and n_found / n_pids < 0.5:
+            print(f"  [WARN] passage store had text for only {n_found}/{n_pids} retrieved ids "
+                  f"({passage_store_path}). A sampled/incomplete store yields empty context and "
+                  f"meaningless LLM output downstream — build the FULL store (no --sample).")
         with open(out_csv, "a", newline="", encoding="utf-8") as fh:
             csv.DictWriter(fh, fieldnames=OUT_COLUMNS).writerows(out)
         print(f"[saved] {eval_key}: {len(out)} rows")

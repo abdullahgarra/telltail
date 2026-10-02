@@ -104,7 +104,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-root", required=True, type=Path,
                     help="Path to the emb_fingerprinting research tree (frozen sources).")
-    ap.add_argument("--out", type=Path, default=ROOT / "_local" / "release")
+    ap.add_argument("--out", type=Path, default=ROOT / "outputs" / "release")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     total = 0

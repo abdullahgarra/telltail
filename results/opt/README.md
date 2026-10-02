@@ -16,7 +16,12 @@ tm1_tm2_ranks/
                   python -m opt.score --tm 2 --long results/opt/tm1_tm2_ranks/ranks.csv --out <dir>
 tm3_responses/
   <eval_model>.jsonl   TM3 RAG responses (gpt-4o-mini), one file per evaluated retriever,
-                       as generated before judging. LLM judgments will be added here.
+                       as generated before judging.
+tm3_judgments/
+  judgements.jsonl     LLM-judge verdicts over the responses above — slim form:
+                       {attack_model, query_group, eval_model, judgement, judge_reason,
+                       judge_model}. Joins back to tm3_responses/ on the first three keys.
+                       Reproduce via `opt.judge`; plot via `plots/judge_heatmap.py`.
 ```
 
-Scores (OSCR curves, QB) live under `results/paper/`.
+Scores (OSCR curves, QB) and the LLM-judge heatmap live under `results/paper/`.

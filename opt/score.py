@@ -1,25 +1,10 @@
-"""TellTail-OPT — Stage 3 scorer (TM1 ordered + TM2 unordered; OSCR + ASR-by-budget).
+"""TellTail-OPT Stage 3 (TM1/TM2): open-set scorer (OSCR + ASR-by-budget).
 
-Reads the long evaluation CSV (query_id, attack_model, passage_id, rank, error,
-eval_model) and produces the open-set metrics. The ONLY difference between the two
-threat models is the hit rule:
+Reads the long eval CSV (query_id, attack_model, passage_id, rank, error, eval_model). The
+only TM difference is the hit rule: TM2 hit = rank<=k; TM1 hit = rank<=min(3,k) (ordered —
+only the top-3 exposed positions count). Reproduces the paper goldens
+(results/paper/tm{1,2}_telltail_opt_*.csv) exactly.
 
-    TM2 (unordered top-k):  hit = rank <= k
-    TM1 (ordered):          hit = rank <= min(3, k)   (only the top-3 exposed positions
-                            count; k=1/2 expose 1/2). So k>=3 all collapse to appeared@3.
-
-Everything else (S = mean_q hit, knownness = max_a S, unique-argmax > 0.5 prediction,
-OSCR threshold sweep, ASR-by-budget subsetting) is shared. Outputs match the paper golden
-schemas exactly (results/paper/tm{1,2}_telltail_opt_*.csv):
-  * OSCR : 8 cols (method,setup,k,threshold,ccr,far,false_accepts,known_accept_rate)
-  * qb_k : TM1 43-col (setup1, signal=appeared@k, match_mode=threshold_appeared_rate,
-           corpus_top_k=50, n_repeats=200); TM2 40-col (setup2, match_mode=threshold_hit_rate,
-           corpus_top_k=top_k, n_repeats=500).
-
-Reproduction verified to golden tolerances (Δ=0 on enumerated budgets, |Δ|<1e-12 on
-RNG-sampled, exact counts). The gtr-t5 -> gtr-t5-base remap is applied to BOTH columns.
-
-Usage:
     python -m opt.score --tm 1 --long <long.csv> --out <dir>
     python -m opt.score --tm 2 --long <long.csv> --out <dir>
 """
@@ -156,6 +141,11 @@ def score_qb_k(df: pd.DataFrame, tm: str):
     cand = set(df["attack_model"].unique())
     n_known = len([m for m in df["eval_model"].unique() if m in cand])
     n_unknown = n_total - n_known
+    if n_known == 0 or n_unknown == 0:
+        raise SystemExit(
+            f"opt.score is open-set: it needs >=2 eval models including at least one "
+            f"unknown (non-candidate). Got {n_known} known / {n_unknown} unknown. "
+            f"Pass a long CSV covering multiple models — a single-model file can't be scored.")
 
     # Aggregate per (hit-threshold, budget) ONCE; k's that share a threshold reuse it.
     agg_by_thr_qb = {}

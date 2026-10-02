@@ -1,8 +1,6 @@
-"""TellTail-OPT — optimizer configuration.
+"""TellTail-OPT configuration: attack hyper-parameters + per-model token-blocking budgets.
 
-Prefixes are NOT duplicated here: they come from `configs/models.yaml` via
-`telltail.models` (one canonical source for all of TellTail). This file holds only
-the attack hyper-parameters and the per-model token-blocking budgets.
+Prefixes live in `configs/models.yaml` (via `telltail.models`), not here.
 """
 from __future__ import annotations
 

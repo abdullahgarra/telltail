@@ -1,8 +1,9 @@
 # opt/ — TellTail-OPT (model-specific optimized queries)
 
-TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE / RASLITE+
-discrete-text optimizer) so that a carrier query, once suffixed, retrieves a chosen target
-under the victim retriever — a stronger fingerprint than the Random / Topic query variants.
+TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE discrete-text
+optimizer) so that a carrier query, once suffixed, retrieves a chosen target under the
+victim retriever — a stronger fingerprint than the Random / Topic query variants.
+(The RASLITE+ black-box path for API-only models is not yet ported; see status below.)
 
 ## Pipeline
 
@@ -55,7 +56,13 @@ opt/inputs/query_passages.csv               # one benign query + 100 topic passa
         │
         ▼  python -m opt.llm --retrieved <dir>/retrieved.csv --attacks <dir>/phase1_attacks.csv \
         │        --out <dir>/responses
-<dir>/responses/<eval_model>.jsonl           # gpt-4o-mini responses (fed to your own judge)
+<dir>/responses/<eval_model>.jsonl           # gpt-4o-mini responses
+        │
+        ▼  python -m opt.judge --responses <dir>/responses --out <dir>/judge     # DeepInfra key
+<dir>/judge/judgements.jsonl                 # per-response verdict (on-topic? true/false)
+        │
+        ▼  python plots/judge_heatmap.py --judgments <dir>/judge --out <dir>
+heatmap_llm_judge_hp_rate.png                # candidate x eval, judge-verdict rate
 ```
 
 - **optimize `--mode topic`** adds a third blocking stage (basic-BPE lexical over
@@ -64,8 +71,11 @@ opt/inputs/query_passages.csv               # one benign query + 100 topic passa
   retrieval is slow — pass **`--k 100`** for the paper's set; the LLM uses the top-3 either
   way) and attaches passage text from the on-disk store (below).
 - **`llm.py`** fills the Open WebUI RAG template, calls **gpt-4o-mini, temperature 0.8**,
-  and writes one JSONL per eval model. Judging is **out of scope** — run your own judge over
-  these responses.
+  and writes one JSONL per eval model.
+- **`judge.py`** asks a judge LLM (DeepSeek-V4-Flash via DeepInfra; `DEEPINFRA_API_KEY`)
+  whether each response says the retrieved context is *exclusively* on the hidden topic —
+  the response-only signal. Writes a slim `judgements.jsonl` (+ full records).
+  `plots/judge_heatmap.py` turns the verdicts into the candidate×eval heatmap.
 
 ### Passage store (required for the topic attack + demo, NOT for TM1/TM2)
 
