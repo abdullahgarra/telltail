@@ -235,18 +235,24 @@ enumerate-when-≤-repeats on; TM1 `top_ks 1,2,3,5,10,20,50` `n_repeats 100`; TM
 
 ## Layout
 
-- `demo/` — the reviewer demo (`fingerprint`, `topic`, `optimize`) + shipped `data/` (~5.6k corpus, ready queries).
-- `opt/` — TellTail-OPT (optimize → evaluate → score), `tropt`-backed.
-- `generic_queries/` — Topic/Random pipeline (retrieve/fetch/score/evaluate/sweep) + `_common.py`; ships the query sets in `generic_queries/queries/`.
-- `telltail/` — core library (model registry, env paths, embedding).
-- `configs/models.yaml` — 53-model registry (19 candidates); byte-exact prefixes + `index_max_seq_length`.
-- `indexing/` — FAISS index builder (`build_faiss.py`; `indexing/openai/` for the Batch pipeline).
-- `plots/`, `scripts/`, `results/paper/` (published CSVs), `tools/`.
-
-## Notes
-
-- The **built** FAISS indices are not shipped (one IVF+SQ8 index over ~8.8M MS MARCO
-  passages per model — multi-GB each). The code to build them is in `indexing/`; a rebuilt
-  index matches the released one to within one SQ8 quantization step (GPU float jitter).
-  The **demo** sidesteps this entirely with its small shipped corpus.
-- Keys are read only from the environment / `.env` — never hardcoded.
+```
+telltail/
+├── demo/                 # reviewer demo: fingerprint · topic · optimize
+│   └── data/             #   small ~5.6k-passage corpus + ready optimized queries
+├── opt/                  # TellTail-OPT: optimize → evaluate → score (+ retrieve/llm/judge for TM3)
+│   └── inputs/           #   attack queries, topic passages, HP block words
+├── generic_queries/      # Topic/Random pipeline: retrieve / fetch / score / evaluate / sweep
+│   └── queries/          #   msmarco_topic.csv, msmarco_random.csv
+├── telltail/             # core library: model registry, env paths, embedding, passage store
+├── indexing/             # FAISS index builder (build_faiss.py)
+│   └── openai/           #   OpenAI index via the Batch API
+├── configs/              # models.yaml — 53-model registry (19 candidates), byte-exact prefixes
+├── plots/                # figures: asr_vs_budget · plot_ccr_0_oscr · judge_heatmap
+├── scripts/              # reproduce_generic.sh, reproduce_opt.sh
+├── results/              # paper/ (published CSVs) · opt/ (ranks, verdicts, optimized queries)
+├── tools/                # build_passage_store, download/package release, build_models_yaml
+├── tests/                # pytest: registry + passage store
+├── third_party/tropt/    # vendored GASLITE optimizer
+├── assets/               # README figures
+└── requirements.txt · pyproject.toml · .env.example · LICENSE · README.md
+```
