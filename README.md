@@ -161,18 +161,11 @@ API differs); see `third_party/tropt/`.
 | `OPENAI_API_KEY` | only for the `openai-3-small` model |
 | `HF_TOKEN` | only for gated HF models |
 
-## 🪶 TellTail-OPT
-
-`opt/` crafts per-model **optimized trigger suffixes** so a benign query, once suffixed,
-retrieves a chosen target under the victim retriever — a stronger fingerprint than the
-Topic/Random query variants. See `opt/README.md` for the pipeline, CLI, and threat-model
-status; how to run each reproduction is in [Full reproduction](#full-reproduction).
-
 The optimizer is powered by **TROPT**, vendored under `third_party/` (see `third_party/tropt/`).
 
 ## Full reproduction
 
-At paper scale, TellTail-OPT fingerprints the deployed retriever across the full 53-model
+At paper scale, TellTail fingerprints the deployed retriever across the full 53-model
 zoo — the diagonal (correct self-identification) dominates:
 
 <p align="center"><img src="assets/heatmap_top3_rate.png" alt="TellTail-OPT top-3 rate (19 candidates x 53 deployed models)" width="860"/></p>
