@@ -1,8 +1,7 @@
 # opt/ — TellTail-OPT (model-specific optimized queries)
 
 TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE discrete-text
-optimizer) so that a carrier query, once suffixed, retrieves a chosen target under the
-victim retriever — a stronger fingerprint than the Random / Topic query variants.
+optimizer) so that a benign query, once suffixed, retrieves a chosen target (topic or passage) under the victim retriever.
 
 ## Pipeline
 
@@ -24,16 +23,13 @@ phase1_attacks.csv                          # + trigger_suffix per row
   `--mode passage` (default; TM1/TM2) aims the suffix at one victim passage;
   `--mode topic` aims it at the **centroid** of a group of passages (the topic-level
   attack, below). Semantic "global weighted blocking" forbids the top-k% of each model's
-  vocab. Prefixes come from `configs/models.yaml`. Requires the private `tropt` library.
-- **`evaluate.py`** — embeds `eval-prefix + query + trigger` with each eval model and
+  vocab. Prefixes come from `configs/models.yaml`. Requires our own `tropt` library.
+- **`evaluate.py`** — embeds `eval-prefix + benign_query + trigger_suffix` with each eval model and
   records the target's rank in that model's **full** frozen FAISS index (`k=ntotal`,
-  `nprobe=8192`). No `tropt` dependency.
+  `nprobe=8192`).
 - **`score.py`** — open-set scorer for both threat models via `--tm`: per-k hit matrix →
   OSCR curves (CCR vs FAR) and ASR-by-budget. The *only* difference between TMs is the hit
-  rule — `--tm 2`: `hit = rank <= k`; `--tm 1`: `hit = rank <= min(3,k)` (ordered: only the
-  top-3 exposed positions count, so k>=3 collapse to appeared@3). Emits the exact golden
-  schemas (`tm1`=43-col/`setup1`, `tm2`=40-col/`setup2`) and reproduces both paper goldens
-  bit-exactly (every column, Δ=0).
+  rule — `--tm 2`: `hit = rank <= k`; `--tm 1`: `hit = rank <= min(3,k)`.
 - **`config.py`** — attack hyper-parameters and per-model token-blocking budgets
   (gemma 90%, openai-3-small 25%, everything else 50%), plus the topic-attack / RAG knobs.
 
@@ -76,11 +72,11 @@ heatmap_llm_judge_hp_rate.png                # candidate x eval, judge-verdict r
   the response-only signal. Writes a slim `judgements.jsonl` (+ full records).
   `plots/judge_heatmap.py` turns the verdicts into the candidate×eval heatmap.
 
-### Passage store (required for the topic attack + demo, NOT for TM1/TM2)
+### Passage store (full TM3 reproduction only — not the demo, not TM1/TM2)
 
-Retrieval needs `passage_id → text`. TM1/TM2 score **ranks**, not text, so they don't need
-it; only the topic attack and the demo do. Build it once onto your own disk (CPU + disk
-only, ~3 GB, nothing committed):
+`opt.retrieve` needs `passage_id → text`. TM1/TM2 score **ranks**, not text; and the demo reads
+text from its small shipped corpus — so only **full-scale TM3 reproduction** needs this store.
+Build it once onto your own disk (CPU + disk only, ~3 GB, nothing committed):
 
 ```
 python -m tools.build_passage_store --out $TELLTAIL_DATA_DIR/passages.sqlite
@@ -92,20 +88,3 @@ python -m tools.build_passage_store --out /tmp/passages_sample.sqlite --sample 2
 It iterates the corpus through the **same loader** as `indexing/build_faiss.py`
 (`telltail.corpus`), so store ids and index docids share one id space. If it's missing,
 `opt.retrieve` fails with the exact build command above.
-
-## Threat-model status
-
-- **TM2-OPT (unordered top-k): implemented & validated.** `evaluate.py` reproduces the
-  golden ranks (hit/miss identical at every k; diagonal exact) and `score.py --tm 2`
-  reproduces the golden OSCR + ASR-by-budget (every column, Δ=0).
-- **TM1-OPT (ordered): implemented & validated.** `score.py --tm 1` (hit = rank ≤ min(3,k),
-  the "appeared-at" rule) reproduces the golden OSCR + qb_k bit-exactly.
-- **Topic-level attack (response-only / TM3): implemented.** `optimize --mode topic` →
-  `retrieve` → `llm`, reproducing the research flow (centroid target, 3-stage blocking,
-  gpt-4o-mini RAG). Keyword matching and the mincut blocking path are deliberately dropped;
-  judging is left to the user. Golden: `phase1_attacks.csv` + the per-eval-model response
-  JSONLs.
-
-## Keys
-
-No keys in the repo. The OpenAI path reads credentials only from the environment / `.env`.
