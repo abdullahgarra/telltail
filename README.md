@@ -190,7 +190,7 @@ bash scripts/reproduce_generic.sh                   # retrieve → fetch → sco
 SKIP_UPSTREAM=1 bash scripts/reproduce_generic.sh   # reuse the score cache (skip retrieve/fetch/score)
 ```
 
-The **`score`** stage writes a reusable **score cache** (the per-target mini-corpus
+The **`score`** stage writes a reusable **score cache** (the per-target proxy-corpus
 similarities) to `$TELLTAIL_OUT_DIR/generic/<query_set>/scores/`. `evaluate`/`sweep` read only
 that cache — so once it exists, re-running the metrics is cheap, which is exactly what
 `SKIP_UPSTREAM=1` reuses.

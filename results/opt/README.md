@@ -1,7 +1,6 @@
-# results/opt — TellTail-OPT paper artifacts
+# results/opt — TellTail-OPT raw paper artifacts
 
-Golden artifacts for the optimization-based attack, at paper scale (the demo under
-`demo/` is separate and smaller).
+Golden artifacts for the optimization-based attack, at paper scale.
 
 ```
 optimized_queries/

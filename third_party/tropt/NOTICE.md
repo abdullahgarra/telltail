@@ -12,7 +12,7 @@ authors' permission**.
 > pip install -e third_party/tropt
 > ```
 
-Upstream project: https://github.com/matanbt/TROPT
+Project: https://github.com/matanbt/TROPT
 
 If you use TROPT, please cite:
 
