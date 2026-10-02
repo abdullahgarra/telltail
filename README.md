@@ -46,11 +46,13 @@ For paper-scale reproduction:
 
 ### 1. Fingerprint victims in TM2
 
-<sub>`python -m demo fingerprint` · CPU · no .env · no keys</sub>
+```bash
+python -m demo fingerprint  #CPU, no .env, no keys
+```
 
 Queries four victim retrievers with the paper's ready optimized queries and names each one.
-By default this is **TM2** (unordered top-k) — the target only has to land in the victim's
-top-k *set*:
+By default this is **TM2** (unordered top-k) — the target passage has to land in the victim's
+top-k *set*. We print a prediction matrix that looks like this:
 
 ```
 victim                  k=1         k=3         k=5         k=10
@@ -60,23 +62,28 @@ e5-small                e5-small    e5-small    e5-small    e5-small
 multilingual-e5-small   UNK         UNK         UNK         UNK
 ```
 
-Three victims are in the candidate set and are identified; `multilingual-e5-small` is an
-**unknown** (non-candidate) multilingual sibling of `e5-small` and correctly returns **UNK**.
-The command also writes a top-3-rate heatmap to `outputs/demo/`.
+Each row is a model deployed, and for each k we specify what our method predicts (i.e., was the fraction of queries where the target passage appeared in the top-k > 0.5).
 
+We choose three victims are in the candidate set and are identified; `multilingual-e5-small` is an
+**unknown** (non-candidate) a sibling of `e5-small` and correctly returns **UNK**.
+The command also writes a top-3-rate heatmap to `outputs/demo/`, you will see the fraciton of queries per candidate model and deployed model (victim).
+
+**TM2** is the harder setup.
 For **TM1** (ordered top-k), add `--tm 1` — then only the top-3 ordered positions count.
 
 ### 2. Fingerprint victims under TM3
 
-<sub>`python -m demo topic` · CPU</sub>
+```bash
+python -m demo topic # CPU
+```
 
 Fingerprinting under the response-only threat model. We use each candidate's optimized **topic**
 triggers - used in the paper - toward Harry Potter. The command
 runs them against each of the demo's victims and checks whether the victim's **top-3 retrieved passages are
 all on-topic**.
 
-In the paper, the top-3 passages are passed to an LLM (gpt-4o-mini) whose answer is scored by
-an LLM judge. For a key-free demo, on-topic is decided by **keyword matching** for simplicity;
+In the paper, the top-3 passages are passed to an LLM (gpt-4o-mini) whose answer is judged by
+an LLM judge. For a key-free demo, we make the judgement based on a **keyword matching** heuristic;
 the top-3 retrieved passages per query are saved under `outputs/demo/`, and after plotting the
 top-3 passages for 3 sample queries of the self target are printed so you can eyeball them.
 
@@ -88,7 +95,8 @@ e5-small                e5-small
 multilingual-e5-small   UNK
 ```
 
-Two opt-in layers add the LLM, shown for the self/diagonal **target** (its ~10 trigger queries):
+You can expand this in two layers.
+The first prints you the responses an LLM would generate on top of the top-3 retrieved passages for each query (10 responses). The second will also run an LLM judge to tag each response by whether it inidcates that the entirety of the context involves Harry Potter passages.
 - **`--llm`** prints (and saves) the gpt-4o-mini RAG response per query — *judge it yourself* 🕹️
   (needs `OPENAI_API_KEY`).
 - **`--judge`** adds a **judgement** column (the LLM judge's verdict), and switches the
@@ -96,12 +104,14 @@ Two opt-in layers add the LLM, shown for the self/diagonal **target** (its ~10 t
 
 ### 3. Optimize a NEW query
 
-<sub>`python -m demo optimize` · GPU</sub>
+```bash
+python -m demo optimize #GPU Recommended
+```
 
 This is the **passage-level** attack (TM1/TM2): it optimizes a trigger toward a single
 **target passage** (not a topic centroid).
 
-**optimizing a trigger needs a CUDA GPU** 🍪. If
+**optimizing a trigger a CUDA GPU is recommended** 🍪. If
 you'd like to craft your own suffix, run it on a GPU:
 
 ```bash
@@ -121,7 +131,7 @@ multilingual-e5-small             2740
 ```
 
 100 GASLITE steps with 50% semantic token-blocking: the new suffix **ranks the target
-passage high on minilm-l6** and far down on the others. Flags: `--query-id N` starts from a
+passage high on minilm-l6** and far down on the others. Flags: `--query-id N` (N=0 to 19) starts from a
 different benign query; `--device` picks the torch device.
 
 
