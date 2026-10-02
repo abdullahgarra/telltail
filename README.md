@@ -11,7 +11,7 @@ with crafted queries and reading what comes back. The headline attack is **TellT
 (model-specific optimized triggers); the quickest way to see it is the demo below. 🪶
 
 <p align="center">
-  <img src="assets/telltail_opt_overview.png" alt="TellTail-OPT overview" width="760"/>
+  <img src="assets/telltail-opt.gif" alt="TellTail-OPT overview" width="760"/>
 </p>
 <p align="center"><sub><b>TellTail-OPT.</b> Optimize a query suffix (with token-blocking) so the
 suffixed query steers the victim retriever toward a chosen <b>target passage</b>
