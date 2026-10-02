@@ -163,29 +163,48 @@ python indexing/build_faiss.py --all        # one IVF+SQ8 index per model over ~
 > one model with `--models <alias>` (`retrieve`/`opt.optimize`) or `--candidates`/`--targets
 > <alias>` (`score`).
 
-**Topic / Random** — `retrieve → fetch → score → evaluate → sweep`:
+**Topic / Random** — one script runs the whole thing (both query sets, both threat models,
+paper configs baked in):
+```bash
+bash scripts/reproduce_generic.sh                   # retrieve → fetch → score → evaluate → sweep
+SKIP_UPSTREAM=1 bash scripts/reproduce_generic.sh   # reuse an existing score cache (skip retrieve/fetch/score)
+```
+
+Per query set (`msmarco_topic.csv`, `msmarco_random.csv`), that's the five stages
+`retrieve → fetch → score → evaluate → sweep`:
 ```bash
 python -m generic_queries retrieve --queries data/queries/msmarco_topic.csv --top-k 50
 python -m generic_queries fetch    --queries data/queries/msmarco_topic.csv --max-k 50   # streams the full BeIR/msmarco corpus — needs live network
 python -m generic_queries score    --queries data/queries/msmarco_topic.csv --corpus-top-k 50
 python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
 python -m generic_queries sweep    --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
-# repeat with msmarco_random.csv and --interface tm2 — or just: bash scripts/reproduce_generic.sh
+# ...then again with --interface tm2 (TM2 uses top-ks 1,2,3,4,5,10,20,50, n_repeats 500)
 ```
 
-**OPT, TM1/TM2** — `optimize → evaluate → score`:
+**OPT, TM1/TM2** — one script runs `optimize → evaluate → score` for both threat models:
+```bash
+bash scripts/reproduce_opt.sh                   # optimize → evaluate → score (TM1 + TM2)
+SKIP_OPTIMIZE=1 bash scripts/reproduce_opt.sh   # score straight from the shipped ranks (no GPU, no indices)
+```
+
+Under the hood, the three stages:
 ```bash
 python -m opt.optimize --queries opt/inputs/queries.csv --out outputs/phase1
 python -m opt.evaluate --attacks outputs/phase1/phase1_attacks.csv --out outputs/opt_long.csv --eval-models <aliases>
 python -m opt.score    --tm 1 --long outputs/opt_long.csv --out outputs/opt_tm1    # and --tm 2
 ```
 
-**OPT, TM3 (response-only)** — `optimize → retrieve → llm → judge → heatmap` (plus OpenAI +
-DeepInfra keys). See `opt/README.md`. This chain needs the **full** passage store from
-`tools/build_passage_store.py` (no `--sample`): a sampled store won't contain the retrieved
-docids, so `retrieve` returns empty passage text and `llm` produces meaningless output — with
-no error. `plots/judge_heatmap.py` plots the **shipped** verdicts in `results/opt/tm3_judgments/`,
-not the verdicts your own `judge` run just wrote.
+**OPT, TM3 (response-only)** — opt in with `RUN_TM3=1`:
+```bash
+RUN_TM3=1 bash scripts/reproduce_opt.sh         # optimize --mode topic → retrieve → llm → judge → heatmap
+```
+
+Needs the **full** passage store from `tools/build_passage_store.py` (no `--sample`: a sampled
+store won't contain the retrieved docids, so `retrieve` returns empty passage text and `llm`
+produces meaningless output — with no error), plus OpenAI (RAG) + DeepInfra (judge) keys. See
+`opt/README.md`. (The bare `python plots/judge_heatmap.py` in Section C plots the **shipped**
+verdicts in `results/opt/tm3_judgments/`, not your run's — the script points it at your fresh
+verdicts.)
 
 ### B. From the shipped OPT ranks (+ your own generic score cache) (CPU, minutes — no indices)
 
