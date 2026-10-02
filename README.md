@@ -173,11 +173,11 @@ SKIP_UPSTREAM=1 bash scripts/reproduce_generic.sh   # reuse an existing score ca
 Per query set (`msmarco_topic.csv`, `msmarco_random.csv`), that's the five stages
 `retrieve → fetch → score → evaluate → sweep`:
 ```bash
-python -m generic_queries retrieve --queries data/queries/msmarco_topic.csv --top-k 50
-python -m generic_queries fetch    --queries data/queries/msmarco_topic.csv --max-k 50   # streams the full BeIR/msmarco corpus — needs live network
-python -m generic_queries score    --queries data/queries/msmarco_topic.csv --corpus-top-k 50
-python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
-python -m generic_queries sweep    --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
+python -m generic_queries retrieve --queries generic_queries/queries/msmarco_topic.csv --top-k 50
+python -m generic_queries fetch    --queries generic_queries/queries/msmarco_topic.csv --max-k 50   # streams the full BeIR/msmarco corpus — needs live network
+python -m generic_queries score    --queries generic_queries/queries/msmarco_topic.csv --corpus-top-k 50
+python -m generic_queries evaluate --interface tm1 --queries generic_queries/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
+python -m generic_queries sweep    --interface tm1 --queries generic_queries/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
 # ...then again with --interface tm2 (TM2 uses top-ks 1,2,3,4,5,10,20,50, n_repeats 500)
 ```
 
@@ -215,9 +215,9 @@ the flag.
 
 ```bash
 python -m opt.score --tm 1 --long results/opt/tm1_tm2_ranks/ranks.csv --out outputs/opt_tm1   # and --tm 2
-python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv \
+python -m generic_queries evaluate --interface tm1 --queries generic_queries/queries/msmarco_topic.csv \
     --score-cache <cache> --top-ks 1,2,3,5,10,20,50 --n-repeats 100 --n-jobs 8
-python -m generic_queries sweep    --interface tm2 --queries data/queries/msmarco_topic.csv \
+python -m generic_queries sweep    --interface tm2 --queries generic_queries/queries/msmarco_topic.csv \
     --score-cache <cache> --top-ks 1,2,3,4,5,10,20,50
 ```
 
@@ -237,11 +237,11 @@ enumerate-when-≤-repeats on; TM1 `top_ks 1,2,3,5,10,20,50` `n_repeats 100`; TM
 
 - `demo/` — the reviewer demo (`fingerprint`, `topic`, `optimize`) + shipped `data/` (~5.6k corpus, ready queries).
 - `opt/` — TellTail-OPT (optimize → evaluate → score), `tropt`-backed.
-- `generic_queries/` — Topic/Random pipeline (retrieve/fetch/score/evaluate/sweep) + `_common.py`.
+- `generic_queries/` — Topic/Random pipeline (retrieve/fetch/score/evaluate/sweep) + `_common.py`; ships the query sets in `generic_queries/queries/`.
 - `telltail/` — core library (model registry, env paths, embedding).
 - `configs/models.yaml` — 53-model registry (19 candidates); byte-exact prefixes + `index_max_seq_length`.
 - `indexing/` — FAISS index builder (`build_faiss.py`; `indexing/openai/` for the Batch pipeline).
-- `data/queries/`, `plots/`, `scripts/`, `results/paper/` (published CSVs), `tools/`.
+- `plots/`, `scripts/`, `results/paper/` (published CSVs), `tools/`.
 
 ## Notes
 

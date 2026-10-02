@@ -7,7 +7,7 @@
 #   * A populated .env (see .env.example): TELLTAIL_DATA_DIR, TELLTAIL_INDEX_DIR,
 #     TELLTAIL_OUT_DIR. OPENAI_API_KEY is only needed if the openai-3-small model
 #     is in the set.
-#   * Query sets in data/queries/: msmarco_topic.csv, msmarco_random.csv.
+#   * Query sets in generic_queries/queries/: msmarco_topic.csv, msmarco_random.csv.
 #
 # SKIP_UPSTREAM=1 skips retrieve/fetch/score and reuses the existing score cache
 # ($TELLTAIL_OUT_DIR/generic/<query_set>/scores); evaluate/sweep then run off it:
@@ -26,7 +26,7 @@ TM1_TOPKS="1,2,3,5,10,20,50"
 TM2_TOPKS="1,2,3,4,5,10,20,50"
 
 for QS in msmarco_topic msmarco_random; do
-  CSV="data/queries/${QS}.csv"
+  CSV="generic_queries/queries/${QS}.csv"
   echo "############ query set: ${QS} ############"
 
   # ---- upstream pipeline (needs FAISS indices + msmarco corpus + GPU) --------
