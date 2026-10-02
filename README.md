@@ -27,7 +27,7 @@ suffixed query steers the victim retriever toward a chosen <b>target passage</b>
 ## 🪶 Quick demo
 
 The repo ships a small corpus of **~5.6k MS MARCO
-passages** (`demo/data/`) — used to run all the optimized queries against four victim
+passages** (`demo/data/`) — used to run all the optimized queries used in the paper against four "victim"
 models — and builds a small index per victim on the fly (cached after the first run and outputs default to `outputs/demo/`).
 
 From a fresh clone (Python 3.12):
@@ -39,13 +39,18 @@ python -m demo fingerprint                 # CPU · no .env · no keys
 ```
 
 The first run downloads the four victim models (public, no HF token) and builds their small
-indices; later runs should be faster. `fingerprint` and `topic` need no API keys;
-`optimize` additionally needs a GPU and the bundled `tropt`. Paper-scale reproduction is in
+indices; later runs should be faster.
+Running `optimize` needs a GPU. 
+For paper-scale reproduction:
 [Full reproduction](#full-reproduction).
 
-### 1. Fingerprint the victims &nbsp;·&nbsp; `python -m demo fingerprint` (CPU)
+### 1. Fingerprint victims in TM2
 
-Probes four victim retrievers with the paper's ready optimized queries (All candidate model's queries) and names each one:
+<sub>`python -m demo fingerprint` · CPU · no .env · no keys</sub>
+
+Queries four victim retrievers with the paper's ready optimized queries and names each one.
+By default this is **TM2** (unordered top-k) — the target only has to land in the victim's
+top-k *set*:
 
 ```
 victim                  k=1         k=3         k=5         k=10
@@ -56,17 +61,24 @@ multilingual-e5-small   UNK         UNK         UNK         UNK
 ```
 
 Three victims are in the candidate set and are identified; `multilingual-e5-small` is an
-**unseen** (non-candidate) multilingual sibling of `e5-small` and correctly returns **UNK** —
-the fingerprint isn't fooled by a closely related model it has never registered. The command
-also writes a top-3-rate heatmap (`S[candidate, victim]`, predicted cell outlined) to `outputs/demo/`.
+**unknown** (non-candidate) multilingual sibling of `e5-small` and correctly returns **UNK**.
+The command also writes a top-3-rate heatmap to `outputs/demo/`.
 
-### 2. Topic-level / response-only attack &nbsp;·&nbsp; `python -m demo topic` (CPU)
+For **TM1** (ordered top-k), add `--tm 1` — then only the top-3 ordered positions count.
 
-The response-only analogue of `fingerprint`. Each candidate ships optimized **topic**
-triggers (crafted toward a topic's centroid via `opt.optimize --mode topic`). The command
+### 2. Fingerprint victims under TM3
+
+<sub>`python -m demo topic` · CPU</sub>
+
+Fingerprinting under the response-only threat model. We use each candidate's optimized **topic**
+triggers - used in the paper - toward Harry Potter. The command
 runs them against each of the demo's victims and checks whether the victim's **top-3 retrieved passages are
-all on-topic** — the signal a response-only attacker reads off the generated answer — then
-names each victim:
+all on-topic**.
+
+In the paper, the top-3 passages are passed to an LLM (gpt-4o-mini) whose answer is scored by
+an LLM judge. For a key-free demo, on-topic is decided by **keyword matching** for simplicity;
+the top-3 retrieved passages per query are saved under `outputs/demo/`, and after plotting the
+top-3 passages for 3 sample queries of the self target are printed so you can eyeball them.
 
 ```
 victim                  prediction
@@ -76,14 +88,20 @@ e5-small                e5-small
 multilingual-e5-small   UNK
 ```
 
-Pass **`--judge`** to
-instead generate the RAG answer and score it with the LLM judge (the paper's criterion);
-this makes API calls and needs `OPENAI_API_KEY` (generation) + `DEEPINFRA_API_KEY` (judge).
-(Or judge it yourself 🕹️)
+Two opt-in layers add the LLM, shown for the self/diagonal **target** (its ~10 trigger queries):
+- **`--llm`** prints (and saves) the gpt-4o-mini RAG response per query — *judge it yourself* 🕹️
+  (needs `OPENAI_API_KEY`).
+- **`--judge`** adds a **judgement** column (the LLM judge's verdict), and switches the
+  fingerprint signal from keyword to the judge (needs `OPENAI_API_KEY` + `DEEPINFRA_API_KEY`).
 
-### 3. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
+### 3. Optimize a NEW query
 
-`fingerprint` and `topic` run on CPU, but **optimizing a trigger needs a CUDA GPU** 🍪. If
+<sub>`python -m demo optimize` · GPU</sub>
+
+This is the **passage-level** attack (TM1/TM2): it optimizes a trigger toward a single
+**target passage** (not a topic centroid).
+
+**optimizing a trigger needs a CUDA GPU** 🍪. If
 you'd like to craft your own suffix, run it on a GPU:
 
 ```bash
@@ -103,8 +121,8 @@ multilingual-e5-small             2740
 ```
 
 100 GASLITE steps with 50% semantic token-blocking: the new suffix **ranks the target
-passage high on minilm-l6** and far down on the others. `--query-id N` picks a different
-benign query to start from.
+passage high on minilm-l6** and far down on the others. Flags: `--query-id N` starts from a
+different benign query; `--device` picks the torch device.
 
 
 ## Setup
@@ -158,20 +176,26 @@ All paths come from `.env`. Pick by how much you want to recompute.
 ```bash
 python indexing/build_faiss.py --all        # one IVF+SQ8 index per model over ~8.8M MS MARCO passages
 ```
+Build only a subset with `--models`, e.g. `python indexing/build_faiss.py --models minilm-l6,e5-small`
+— the aliases are the `alias:` keys in `configs/models.yaml`.
 
 > `retrieve`, `score`, and `opt.optimize` default to the **whole 53-model registry**. Scope to
 > one model with `--models <alias>` (`retrieve`/`opt.optimize`) or `--candidates`/`--targets
 > <alias>` (`score`).
 
-**Topic / Random** — one script runs the whole thing (both query sets, both threat models,
+**Topic / Random** — one script runs the whole procedure (both query sets, both threat models,
 paper configs baked in):
 ```bash
 bash scripts/reproduce_generic.sh                   # retrieve → fetch → score → evaluate → sweep
-SKIP_UPSTREAM=1 bash scripts/reproduce_generic.sh   # reuse an existing score cache (skip retrieve/fetch/score)
+SKIP_UPSTREAM=1 bash scripts/reproduce_generic.sh   # reuse the score cache (skip retrieve/fetch/score)
 ```
 
-Per query set (`msmarco_topic.csv`, `msmarco_random.csv`), that's the five stages
-`retrieve → fetch → score → evaluate → sweep`:
+The **`score`** stage writes a reusable **score cache** (the per-target mini-corpus
+similarities) to `$TELLTAIL_OUT_DIR/generic/<query_set>/scores/`. `evaluate`/`sweep` read only
+that cache — so once it exists, re-running the metrics is cheap, which is exactly what
+`SKIP_UPSTREAM=1` reuses.
+
+Under the hood, the five stages (per query set — `msmarco_topic.csv`, `msmarco_random.csv`):
 ```bash
 python -m generic_queries retrieve --queries generic_queries/queries/msmarco_topic.csv --top-k 50
 python -m generic_queries fetch    --queries generic_queries/queries/msmarco_topic.csv --max-k 50   # streams the full BeIR/msmarco corpus — needs live network
@@ -194,19 +218,24 @@ python -m opt.evaluate --attacks outputs/phase1/phase1_attacks.csv --out outputs
 python -m opt.score    --tm 1 --long outputs/opt_long.csv --out outputs/opt_tm1    # and --tm 2
 ```
 
-**OPT, TM3 (response-only)** — opt in with `RUN_TM3=1`:
+**OPT, TM3 (response-only)** — opt with `RUN_TM3=1`:
 ```bash
 RUN_TM3=1 bash scripts/reproduce_opt.sh         # optimize --mode topic → retrieve → llm → judge → heatmap
 ```
 
 Needs the **full** passage store from `tools/build_passage_store.py` (no `--sample`: a sampled
 store won't contain the retrieved docids, so `retrieve` returns empty passage text and `llm`
-produces meaningless output — with no error), plus OpenAI (RAG) + DeepInfra (judge) keys. See
+produces meaningless output), plus OpenAI (RAG) + DeepInfra (judge) keys. See
 `opt/README.md`. (The bare `python plots/judge_heatmap.py` in Section C plots the **shipped**
-verdicts in `results/opt/tm3_judgments/`, not your run's — the script points it at your fresh
-verdicts.)
+verdicts in `results/opt/tm3_judgments/`. The `RUN_TM3=1` script instead points the heatmap at
+**your own** run's verdicts — the judgements your `judge` step just wrote to
+`outputs/opt/tm3_judge/` — via `plots/judge_heatmap.py --judgments outputs/opt/tm3_judge`.)
 
-### B. From the shipped OPT ranks (+ your own generic score cache) (CPU, minutes — no indices)
+### B. From the shipped OPT ranks (+ your own generic score cache) (CPU, no indices)
+
+Recompute just the **final metrics** — no GPU, no 8.8M-passage indices — from cached
+intermediate results: the OPT ranks we ship, and (for the generic chain) the score cache
+Section A's `score` wrote.
 
 OPT TM1/TM2 scores come straight from the shipped ranks. For the generic (Topic/Random)
 chain **no score cache is shipped** — `<cache>` is the `scores/` dir that Section A's `score`
@@ -221,13 +250,19 @@ python -m generic_queries sweep    --interface tm2 --queries generic_queries/que
     --score-cache <cache> --top-ks 1,2,3,4,5,10,20,50
 ```
 
-### C. Figures only (from the published CSVs, no GPU, seconds)
+### C. Figures only (from the published CSVs, CPU)
 
+The plot scripts default to the paper's published CSVs in `results/paper/` — our exact reported
+configs — so they reproduce the paper figures with no arguments beyond `--tm`:
 ```bash
 python plots/asr_vs_budget.py   --tm 1     # ASR vs budget (OPT / Topic / Random)
 python plots/plot_ccr_0_oscr.py --tm 2     # CCR@fa<=0 / CCR@fa<=2 / AUOSCR vs k
 python plots/judge_heatmap.py              # TM3 response-only heatmap (from the shipped verdicts)
 ```
+
+To double-check us, the raw results behind these figures are shipped too: the optimized queries
+(`results/opt/optimized_queries/`), the OPT ranks (`results/opt/tm1_tm2_ranks/ranks.csv`), and the
+TM3 RAG responses + judge verdicts (`results/opt/tm3_responses/`, `results/opt/tm3_judgments/`).
 
 Exact paper configs: budgets `1,5,10,12,15,18,20`, seed `1337`, corpus `same_as_top_k`,
 enumerate-when-≤-repeats on; TM1 `top_ks 1,2,3,5,10,20,50` `n_repeats 100`; TM2

@@ -28,6 +28,7 @@ openai==2.15.0
 # --- config / plotting ---
 python-dotenv==1.2.1
 matplotlib==3.10.8
+seaborn==0.13.2          # plots/judge_heatmap.py
 PyYAML==6.0.3
 
 # --- TellTail-OPT optimizer (TROPT) ---
