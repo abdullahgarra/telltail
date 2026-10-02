@@ -20,6 +20,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
+import sys
 import time
 from pathlib import Path
 from typing import Optional
@@ -112,9 +114,16 @@ def main() -> None:
     args = ap.parse_args()
 
     out = args.out or store_path()
-    build(out, sample=args.sample)
+    build(out, sample=args.sample)             # closes the DB connection in its finally
     if args.smoke or args.check_index:
         smoke_test(out, args.check_index)
+
+    # The corpus loader pulls in C extensions (datasets/torch) whose worker threads can
+    # abort at interpreter finalization ("PyGILState_Release ... no thread-state", core
+    # dump, exit 134) even though the build + round-trip fully succeeded. The DB is already
+    # flushed and closed, so skip the broken teardown and exit cleanly.
+    sys.stdout.flush(); sys.stderr.flush()
+    os._exit(0)
 
 
 if __name__ == "__main__":

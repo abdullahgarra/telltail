@@ -25,7 +25,9 @@ import pandas as pd
 
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_JUDGMENTS = REPO / "results" / "opt" / "tm3_judgments"
-DEFAULT_OUT = REPO / "results" / "paper"
+# Default under outputs/ (gitignored) so a Section-C run doesn't overwrite the committed
+# paper figure in results/paper/ or dirty the working tree. Pass --out to override.
+DEFAULT_OUT = REPO / "outputs" / "plots"
 
 
 def _find_files(d: Path):

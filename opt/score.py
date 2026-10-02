@@ -141,6 +141,11 @@ def score_qb_k(df: pd.DataFrame, tm: str):
     cand = set(df["attack_model"].unique())
     n_known = len([m for m in df["eval_model"].unique() if m in cand])
     n_unknown = n_total - n_known
+    if n_known == 0 or n_unknown == 0:
+        raise SystemExit(
+            f"opt.score is open-set: it needs >=2 eval models including at least one "
+            f"unknown (non-candidate). Got {n_known} known / {n_unknown} unknown. "
+            f"Pass a long CSV covering multiple models — a single-model file can't be scored.")
 
     # Aggregate per (hit-threshold, budget) ONCE; k's that share a threshold reuse it.
     agg_by_thr_qb = {}

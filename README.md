@@ -27,7 +27,7 @@ suffixed query steers the victim retriever toward a chosen <b>target passage</b>
 ## 🪶 Quick demo
 
 The repo ships a small corpus of **~5.6k MS MARCO
-passages** (`demo/data/`) — used to run all the optimized queries against the four victim
+passages** (`demo/data/`) — used to run all the optimized queries against four victim
 models — and builds a small index per victim on the fly (cached after the first run and outputs default to `outputs/demo/`).
 
 From a fresh clone (Python 3.12):
@@ -83,7 +83,14 @@ this makes API calls and needs `OPENAI_API_KEY` (generation) + `DEEPINFRA_API_KE
 
 ### 3. Optimize a NEW query &nbsp;·&nbsp; `python -m demo optimize` (GPU)
 
-Craft a fresh trigger for `minilm-l6` and watch it fingerprint only that model:
+`fingerprint` and `topic` run on CPU, but **optimizing a trigger needs a CUDA GPU** 🍪. If
+you'd like to craft your own suffix, run it on a GPU:
+
+```bash
+python -m demo optimize    # CUDA GPU required — torch 2.9.1 / CUDA 12.8, compute capability >= 7.0
+```
+
+It crafts a fresh trigger for `minilm-l6` and shows it fingerprinting only that model:
 
 e.g., 
 
@@ -152,10 +159,14 @@ All paths come from `.env`. Pick by how much you want to recompute.
 python indexing/build_faiss.py --all        # one IVF+SQ8 index per model over ~8.8M MS MARCO passages
 ```
 
+> `retrieve`, `score`, and `opt.optimize` default to the **whole 53-model registry**. Scope to
+> one model with `--models <alias>` (`retrieve`/`opt.optimize`) or `--candidates`/`--targets
+> <alias>` (`score`).
+
 **Topic / Random** — `retrieve → fetch → score → evaluate → sweep`:
 ```bash
 python -m generic_queries retrieve --queries data/queries/msmarco_topic.csv --top-k 50
-python -m generic_queries fetch    --queries data/queries/msmarco_topic.csv --max-k 50
+python -m generic_queries fetch    --queries data/queries/msmarco_topic.csv --max-k 50   # streams the full BeIR/msmarco corpus — needs live network
 python -m generic_queries score    --queries data/queries/msmarco_topic.csv --corpus-top-k 50
 python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
 python -m generic_queries sweep    --interface tm1 --queries data/queries/msmarco_topic.csv --top-ks 1,2,3,5,10,20,50
@@ -169,15 +180,22 @@ python -m opt.evaluate --attacks outputs/phase1/phase1_attacks.csv --out outputs
 python -m opt.score    --tm 1 --long outputs/opt_long.csv --out outputs/opt_tm1    # and --tm 2
 ```
 
-**OPT, TM3 (response-only)** — `optimize → retrieve → llm → judge → heatmap` (needs the passage
-store from `tools/build_passage_store.py`, plus OpenAI + DeepInfra keys). See `opt/README.md`.
+**OPT, TM3 (response-only)** — `optimize → retrieve → llm → judge → heatmap` (plus OpenAI +
+DeepInfra keys). See `opt/README.md`. This chain needs the **full** passage store from
+`tools/build_passage_store.py` (no `--sample`): a sampled store won't contain the retrieved
+docids, so `retrieve` returns empty passage text and `llm` produces meaningless output — with
+no error. `plots/judge_heatmap.py` plots the **shipped** verdicts in `results/opt/tm3_judgments/`,
+not the verdicts your own `judge` run just wrote.
 
-### B. From the released caches / ranks (CPU, minutes — no indices)
+### B. From the shipped OPT ranks (+ your own generic score cache) (CPU, minutes — no indices)
+
+OPT TM1/TM2 scores come straight from the shipped ranks. For the generic (Topic/Random)
+chain **no score cache is shipped** — `<cache>` is the `scores/` dir that Section A's `score`
+writes (`$TELLTAIL_OUT_DIR/generic/<query_set>/scores`), which is also the default if you omit
+the flag.
 
 ```bash
-# OPT TM1/TM2 scores straight from the shipped ranks
 python -m opt.score --tm 1 --long results/opt/tm1_tm2_ranks/ranks.csv --out outputs/opt_tm1   # and --tm 2
-# Topic/Random from released score caches
 python -m generic_queries evaluate --interface tm1 --queries data/queries/msmarco_topic.csv \
     --score-cache <cache> --top-ks 1,2,3,5,10,20,50 --n-repeats 100 --n-jobs 8
 python -m generic_queries sweep    --interface tm2 --queries data/queries/msmarco_topic.csv \

@@ -87,6 +87,7 @@ def run(attacks_csv: Path, out_csv: Path, eval_models: List[str], k: int = C.RET
         model = SentenceTransformer(hf, trust_remote_code=True)
 
         out = []
+        n_pids = n_found = 0
         for i, r in enumerate(rows):
             eval_query = build_topic_eval_query(eval_prefix, r["query_text"], r["trigger_suffix"], is_oai)
             q = model.encode([eval_query], convert_to_numpy=True)[0].reshape(1, -1).astype("float32")
@@ -94,12 +95,17 @@ def run(attacks_csv: Path, out_csv: Path, eval_models: List[str], k: int = C.RET
             _, indices = index.search(q, k)
             pids = [str(docids[int(fid)]) for fid in indices[0] if int(fid) >= 0]
             texts = get_passages(pids, db_path=passage_store_path)
+            n_pids += len(pids); n_found += sum(1 for p in pids if texts.get(p))
             for rank, pid in enumerate(pids, 1):
                 out.append(dict(attack_model=r["attack_model"], query_group=r["query_group"],
                                 eval_model=eval_key, rank=rank, passage_id=pid,
                                 passage_text=texts.get(pid, "")))
             if (i + 1) % 25 == 0:
                 print(f"  [{i+1}/{len(rows)}] triggers retrieved")
+        if n_pids and n_found / n_pids < 0.5:
+            print(f"  [WARN] passage store had text for only {n_found}/{n_pids} retrieved ids "
+                  f"({passage_store_path}). A sampled/incomplete store yields empty context and "
+                  f"meaningless LLM output downstream — build the FULL store (no --sample).")
         with open(out_csv, "a", newline="", encoding="utf-8") as fh:
             csv.DictWriter(fh, fieldnames=OUT_COLUMNS).writerows(out)
         print(f"[saved] {eval_key}: {len(out)} rows")
