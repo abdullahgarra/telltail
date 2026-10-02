@@ -64,9 +64,9 @@ multilingual-e5-small   UNK         UNK         UNK         UNK
 
 Each row is a model deployed, and for each k we specify what our method predicts (i.e., was the fraction of queries where the target passage appeared in the top-k > 0.5).
 
-We choose three victims are in the candidate set and are identified; `multilingual-e5-small` is an
+We use three victims that are in the candidate set and are identified; `multilingual-e5-small` is an
 **unknown** (non-candidate) a sibling of `e5-small` and correctly returns **UNK**.
-The command also writes a top-3-rate heatmap to `outputs/demo/`, you will see the fraciton of queries per candidate model and deployed model (victim).
+The command also writes a top-3-rate heatmap to `outputs/demo/`, you will see the fraction of queries per candidate model and deployed model (victim).
 
 **TM2** is the harder setup.
 For **TM1** (ordered top-k), add `--tm 1` — then only the top-3 ordered positions count.
@@ -96,7 +96,7 @@ multilingual-e5-small   UNK
 ```
 
 You can expand this in two layers.
-The first prints you the responses an LLM would generate on top of the top-3 retrieved passages for each query (10 responses). The second will also run an LLM judge to tag each response by whether it inidcates that the entirety of the context involves Harry Potter passages.
+The first prints you the responses an LLM would generate on top of the top-3 retrieved passages for each query (10 responses). The second will also run an LLM judge to tag each response by whether it indicates that the entirety of the context involves Harry Potter passages.
 - **`--llm`** prints (and saves) the gpt-4o-mini RAG response per query — *judge it yourself* 🕹️
   (needs `OPENAI_API_KEY`).
 - **`--judge`** adds a **judgement** column (the LLM judge's verdict), and switches the
