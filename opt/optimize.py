@@ -12,6 +12,7 @@ import argparse
 import csv
 import gc
 import random
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -240,9 +241,9 @@ def run(queries_csv: Path, out_dir: Path, only_models=None) -> None:
         if alias not in reg:
             print(f"[skip] {alias}: not in registry"); continue
         if reg[alias].get("backend") == "openai":
-            # OpenAI uses the black-box (RASLITE+) path + cl100k blocking — the next
-            # increment. Flagged, not silently dropped.
-            print(f"[pending] {alias}: OpenAI black-box path not ported yet — skipping.")
+            print(f"[openai] {alias}: token-blocking here differs from the config used for "
+                  f"the paper's released queries — skipping. The shipped ready queries are "
+                  f"the paper's.", file=sys.stderr)
             continue
 
         hf_id = reg[alias]["hf_id"]
@@ -401,7 +402,9 @@ def run_topic(queries_csv: Path, out_dir: Path, only_models=None, attack_models=
         if alias not in reg:
             print(f"[skip] {alias}: not in registry"); continue
         if reg[alias].get("backend") == "openai":
-            print(f"[pending] {alias}: OpenAI black-box path not ported yet — skipping.")
+            print(f"[openai] {alias}: token-blocking here differs from the config used for "
+                  f"the paper's released queries — skipping. The shipped ready queries are "
+                  f"the paper's.", file=sys.stderr)
             continue
 
         hf_id = reg[alias]["hf_id"]
