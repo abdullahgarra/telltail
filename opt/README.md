@@ -3,7 +3,6 @@
 TellTail-OPT crafts per-model **optimized trigger suffixes** (via the GASLITE discrete-text
 optimizer) so that a carrier query, once suffixed, retrieves a chosen target under the
 victim retriever — a stronger fingerprint than the Random / Topic query variants.
-(The RASLITE+ black-box path for API-only models is not yet ported; see status below.)
 
 ## Pipeline
 
@@ -106,8 +105,9 @@ It iterates the corpus through the **same loader** as `indexing/build_faiss.py`
   gpt-4o-mini RAG). Keyword matching and the mincut blocking path are deliberately dropped;
   judging is left to the user. Golden: `phase1_attacks.csv` + the per-eval-model response
   JSONLs.
-- **OpenAI black-box (RASLITE+) optimize path: PENDING.** `optimize.py` currently flags
-  `openai-3-small` as `[pending]` (both modes); the white-box path covers the 18 HF models.
+- **`openai-3-small` is not re-optimized here.** The white-box GASLITE path covers the 18 HF
+  models; the API-only model uses a different (black-box) token-blocking setup, so `optimize`
+  skips it. Its shipped ready queries are the paper's — use those.
 
 ## Keys
 
